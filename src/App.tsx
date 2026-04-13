@@ -1,121 +1,85 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Route, Routes, Navigate } from 'react-router-dom';
+import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
-function App() {
-  const [count, setCount] = useState(0)
+import { PublicLayout } from '@/components/layout/PublicLayout';
+import { CaregiverLayout } from '@/components/layout/CaregiverLayout';
+import { ChildLayout } from '@/components/layout/ChildLayout';
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+import Landing from '@/pages/public/Landing';
+import SignIn from '@/pages/public/SignIn';
+import SignUp from '@/pages/public/SignUp';
 
-      <div className="ticks"></div>
+import CaregiverDashboard from '@/pages/caregiver/Dashboard';
+import ChoresList from '@/pages/caregiver/ChoresList';
+import ChoreCreate from '@/pages/caregiver/ChoreCreate';
+import ChoreDetail from '@/pages/caregiver/ChoreDetail';
+import RewardsList from '@/pages/caregiver/RewardsList';
+import RewardCreate from '@/pages/caregiver/RewardCreate';
+import RewardDetail from '@/pages/caregiver/RewardDetail';
+import Approvals from '@/pages/caregiver/Approvals';
+import Reports from '@/pages/caregiver/Reports';
+import ChildrenList from '@/pages/caregiver/ChildrenList';
+import ChildDetailPage from '@/pages/caregiver/ChildDetail';
+import CaregiverNotifications from '@/pages/caregiver/Notifications';
+import CaregiverSettings from '@/pages/caregiver/Settings';
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+import ChildDashboard from '@/pages/child/Dashboard';
+import MyChores from '@/pages/child/MyChores';
+import ChildChoreDetail from '@/pages/child/ChoreDetail';
+import ChildRewards from '@/pages/child/Rewards';
+import ChildRewardDetail from '@/pages/child/RewardDetail';
+import ChildHistory from '@/pages/child/History';
+import ChildNotifications from '@/pages/child/Notifications';
+import ChildSettings from '@/pages/child/Settings';
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
+import NotFound from './pages/NotFound';
 
-export default App
+const App = () => (
+  <TooltipProvider>
+    <Toaster />
+    <Routes>
+      {/* Public */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Landing />} />
+        <Route path="/sign-in" element={<SignIn />} />
+        <Route path="/sign-up" element={<SignUp />} />
+      </Route>
+
+      {/* Caregiver */}
+      <Route path="/app" element={<CaregiverLayout />}>
+        <Route index element={<Navigate to="/app/dashboard" replace />} />
+        <Route path="dashboard" element={<CaregiverDashboard />} />
+        <Route path="chores" element={<ChoresList />} />
+        <Route path="chores/new" element={<ChoreCreate />} />
+        <Route path="chores/:id" element={<ChoreDetail />} />
+        <Route path="rewards" element={<RewardsList />} />
+        <Route path="rewards/new" element={<RewardCreate />} />
+        <Route path="rewards/:id" element={<RewardDetail />} />
+        <Route path="approvals" element={<Approvals />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="children" element={<ChildrenList />} />
+        <Route path="children/:id" element={<ChildDetailPage />} />
+        <Route path="notifications" element={<CaregiverNotifications />} />
+        <Route path="settings" element={<CaregiverSettings />} />
+      </Route>
+
+      {/* Child */}
+      <Route path="/child" element={<ChildLayout />}>
+        <Route index element={<Navigate to="/child/dashboard" replace />} />
+        <Route path="dashboard" element={<ChildDashboard />} />
+        <Route path="chores" element={<MyChores />} />
+        <Route path="chores/:id" element={<ChildChoreDetail />} />
+        <Route path="rewards" element={<ChildRewards />} />
+        <Route path="rewards/:id" element={<ChildRewardDetail />} />
+        <Route path="history" element={<ChildHistory />} />
+        <Route path="notifications" element={<ChildNotifications />} />
+        <Route path="settings" element={<ChildSettings />} />
+      </Route>
+
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  </TooltipProvider>
+);
+
+export default App;
