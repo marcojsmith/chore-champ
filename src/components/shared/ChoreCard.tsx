@@ -21,7 +21,7 @@ export function ChoreCard({ chore, occurrence, compact, onClick }: ChoreCardProp
     return (
       <button
         onClick={onClick}
-        className="w-full flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
+        className="w-full flex items-center justify-between p-4 rounded-xl bg-muted/40 hover:bg-muted border border-transparent hover:border-border/50 transition-all duration-150 text-left"
       >
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{chore.title}</p>
@@ -39,8 +39,9 @@ export function ChoreCard({ chore, occurrence, compact, onClick }: ChoreCardProp
 
   return (
     <Card
-      className={cn('border card-hover cursor-pointer', !chore.isActive && 'opacity-60')}
+      className={cn('rounded-xl border card-hover cursor-pointer', !chore.isActive && 'opacity-60')}
       onClick={onClick}
+      style={{ boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.06)' }}
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">

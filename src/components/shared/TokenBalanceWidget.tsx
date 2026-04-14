@@ -1,4 +1,3 @@
-import { Card, CardContent } from '@/components/ui/card';
 import { Coins, TrendingUp } from 'lucide-react';
 
 interface TokenBalanceWidgetProps {
@@ -11,39 +10,58 @@ interface TokenBalanceWidgetProps {
 
 export function TokenBalanceWidget({ available, reserved, totalEarned, totalSpent, earnedThisWeek }: TokenBalanceWidgetProps) {
   return (
-    <Card className="border bg-gradient-to-br from-token-gold/10 to-token-gold/5">
-      <CardContent className="p-4">
+    <div
+      className="rounded-lg p-5 relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, oklch(0.82 0.19 82) 0%, oklch(0.75 0.16 72) 100%)',
+        boxShadow: '0 4px 20px 0 oklch(0.80 0.18 82 / 0.35)',
+      }}
+    >
+      {/* Decorative circles */}
+      <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-20 -translate-y-1/2 translate-x-1/4"
+        style={{ background: 'oklch(1 0 0)' }} />
+      <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full opacity-10 translate-y-1/2 -translate-x-1/4"
+        style={{ background: 'oklch(1 0 0)' }} />
+
+      <div className="relative">
         <div className="flex items-center gap-2 mb-4">
-          <div className="h-8 w-8 rounded-lg bg-token-gold/20 text-token-gold flex items-center justify-center">
-            <Coins size={16} />
+          <div className="h-8 w-8 rounded-lg bg-white/25 flex items-center justify-center backdrop-blur-sm">
+            <Coins size={16} className="text-white" />
           </div>
-          <p className="font-display font-semibold text-sm">Token Balance</p>
+          <p className="font-display font-semibold text-sm text-white/90">Token Balance</p>
         </div>
-        <div className="flex items-end gap-1 mb-4">
-          <span className="text-3xl font-bold font-display text-token-gold">{available}</span>
-          <span className="text-sm text-muted-foreground mb-1">available</span>
+
+        <div className="mb-4">
+          <div className="flex items-end gap-2">
+            <span className="text-4xl font-bold font-display text-white leading-none relative">
+              {available}
+              <span className="absolute inset-0 token-shimmer pointer-events-none" aria-hidden="true" />
+            </span>
+            <span className="text-white/70 text-sm mb-1">available</span>
+          </div>
           {reserved > 0 && (
-            <span className="text-sm text-muted-foreground mb-1 ml-2">({reserved} reserved)</span>
+            <p className="text-white/60 text-xs mt-1">{reserved} tokens reserved for pending rewards</p>
           )}
         </div>
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="bg-background/60 rounded-lg p-2">
-            <p className="text-xs text-muted-foreground">Earned Total</p>
-            <p className="font-bold text-sm">{totalEarned}</p>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-white/20 rounded-lg p-2.5 backdrop-blur-sm text-center">
+            <p className="text-white/70 text-[10px] font-medium uppercase tracking-wide">Earned</p>
+            <p className="font-bold text-white text-sm mt-0.5">{totalEarned}</p>
           </div>
-          <div className="bg-background/60 rounded-lg p-2">
-            <p className="text-xs text-muted-foreground">Spent Total</p>
-            <p className="font-bold text-sm">{totalSpent}</p>
+          <div className="bg-white/20 rounded-lg p-2.5 backdrop-blur-sm text-center">
+            <p className="text-white/70 text-[10px] font-medium uppercase tracking-wide">Spent</p>
+            <p className="font-bold text-white text-sm mt-0.5">{totalSpent}</p>
           </div>
-          <div className="bg-background/60 rounded-lg p-2">
-            <div className="flex items-center justify-center gap-0.5 text-success">
-              <TrendingUp size={10} />
-              <p className="text-xs">This Week</p>
+          <div className="bg-white/20 rounded-lg p-2.5 backdrop-blur-sm text-center">
+            <div className="flex items-center justify-center gap-0.5">
+              <TrendingUp size={9} className="text-white/80" />
+              <p className="text-white/70 text-[10px] font-medium uppercase tracking-wide">Week</p>
             </div>
-            <p className="font-bold text-sm text-success">+{earnedThisWeek}</p>
+            <p className="font-bold text-white text-sm mt-0.5">+{earnedThisWeek}</p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

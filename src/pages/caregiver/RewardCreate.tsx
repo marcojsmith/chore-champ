@@ -33,7 +33,7 @@ export default function RewardCreate() {
     defaultValues: { tokenCost: 20, isActive: true },
   });
 
-  const onSubmit = async (_data: FormData) => {
+  const onSubmit = async () => {
     await new Promise(r => setTimeout(r, 500));
     toast.success('Reward created! 🎁');
     navigate('/app/rewards');

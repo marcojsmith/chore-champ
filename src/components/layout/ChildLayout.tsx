@@ -20,41 +20,48 @@ export function ChildLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 glass border-b h-14 flex items-center px-4 gap-3">
+      <header className="sticky top-0 z-30 bg-card/90 backdrop-blur-md border-b h-14 flex items-center px-4 gap-3 shadow-sm">
         {user?.imageUrl ? (
-          <img src={user.imageUrl} alt="" className="w-7 h-7 rounded-full object-cover" />
+          <img src={user.imageUrl} alt="" className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20" />
         ) : (
-          <span className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold">
+          <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold ring-2 ring-primary/20">
             {user?.firstName?.[0] ?? '?'}
           </span>
         )}
         <h1 className="font-display font-bold text-lg flex-1">{currentTitle}</h1>
-        <Link to="/child/notifications" className="relative p-2 rounded-lg hover:bg-muted">
-          <Bell size={20} />
+        <Link to="/child/notifications" className="relative p-2 rounded-xl hover:bg-muted transition-colors">
+          <Bell size={19} />
         </Link>
       </header>
 
       {/* Main content */}
-      <main className="flex-1 p-4 pb-20 max-w-lg mx-auto w-full">
+      <main className="flex-1 p-4 pb-24 max-w-lg mx-auto w-full">
         <Outlet />
       </main>
 
       {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t">
-        <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t" style={{ boxShadow: '0 -2px 12px 0 rgb(0 0 0 / 0.06)' }}>
+        <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
           {bottomNavItems.map(item => {
             const active = location.pathname.startsWith(item.path);
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={cn(
-                  'flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-colors min-w-[56px]',
-                  active ? 'text-primary' : 'text-muted-foreground'
-                )}
+                className="flex flex-col items-center gap-0.5 py-1 px-3 min-w-[60px] relative"
               >
-                <item.icon size={20} strokeWidth={active ? 2.5 : 2} />
-                <span className={cn('text-[10px]', active && 'font-semibold')}>{item.title}</span>
+                <div className={cn(
+                  'flex items-center justify-center h-9 w-9 rounded-xl transition-all duration-200',
+                  active ? 'bg-primary text-primary-foreground shadow-sm scale-105' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                )}>
+                  <item.icon size={19} strokeWidth={active ? 2.5 : 2} />
+                </div>
+                <span className={cn(
+                  'text-[10px] transition-colors',
+                  active ? 'text-primary font-semibold' : 'text-muted-foreground'
+                )}>
+                  {item.title}
+                </span>
               </Link>
             );
           })}

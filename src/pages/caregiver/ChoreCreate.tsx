@@ -61,7 +61,7 @@ export default function ChoreCreate() {
 
   const watchAll = watch();
 
-  const onSubmit = async (_data: FormData) => {
+  const onSubmit = async () => {
     await new Promise(r => setTimeout(r, 500));
     toast.success('Chore created! 🎉');
     navigate('/app/chores');

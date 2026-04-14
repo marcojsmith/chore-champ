@@ -1,5 +1,4 @@
 import { PageContainer } from '@/components/shared/PageContainer';
-import { MetricCard } from '@/components/shared/MetricCard';
 import { ChildProfileCard } from '@/components/shared/ChildProfileCard';
 import { NotificationItem } from '@/components/shared/NotificationItem';
 import { TokenBadge } from '@/components/shared/TokenBadge';
@@ -8,6 +7,15 @@ import { dashboardMetrics, children, choreOccurrences, weeklyCompletionData, mon
 import { ListChecks, CheckCircle2, AlertTriangle, ClipboardCheck, Gift, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { cn } from '@/lib/utils';
+
+const metrics = [
+  { title: 'Due Today',       value: dashboardMetrics.choresDueToday,          icon: <ListChecks size={16} />,    color: 'text-primary' },
+  { title: 'Completed',       value: dashboardMetrics.choresCompletedToday,     icon: <CheckCircle2 size={16} />,  color: 'text-success' },
+  { title: 'Overdue',         value: dashboardMetrics.overdueChores,            icon: <AlertTriangle size={16} />, color: 'text-destructive' },
+  { title: 'Approvals',       value: dashboardMetrics.pendingApprovals,         icon: <ClipboardCheck size={16} />,color: 'text-warning' },
+  { title: 'Reward Requests', value: dashboardMetrics.pendingRewardRequests,    icon: <Gift size={16} />,          color: 'text-accent-foreground' },
+];
 
 export default function CaregiverDashboard() {
   const navigate = useNavigate();
@@ -18,107 +26,105 @@ export default function CaregiverDashboard() {
 
   return (
     <PageContainer title="Dashboard" subtitle="Welcome back! Here's what's happening today.">
-      {/* Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-        <MetricCard title="Due Today" value={dashboardMetrics.choresDueToday} icon={<ListChecks size={18} />} variant="primary" />
-        <MetricCard title="Completed" value={dashboardMetrics.choresCompletedToday} icon={<CheckCircle2 size={18} />} variant="success" />
-        <MetricCard title="Overdue" value={dashboardMetrics.overdueChores} icon={<AlertTriangle size={18} />} variant="destructive" />
-        <MetricCard title="Approvals" value={dashboardMetrics.pendingApprovals} icon={<ClipboardCheck size={18} />} variant="warning" />
-        <MetricCard title="Reward Requests" value={dashboardMetrics.pendingRewardRequests} icon={<Gift size={18} />} variant="accent" />
+      {/* Inline stats bar — single surface, no individual cards */}
+      <div className="bg-card border rounded-lg overflow-hidden mb-6 card-base animate-fade-in-up">
+        <div className="flex overflow-x-auto snap-x divide-x divide-border">
+          {metrics.map(m => (
+            <div key={m.title} className={cn(
+              'flex flex-col items-center justify-center py-4 px-2 gap-1 snap-start shrink-0 min-w-[90px]',
+              m.title === 'Overdue' && Number(m.value) > 0 && 'bg-destructive/5'
+            )}>
+              <span className={`${m.color} mb-0.5`}>{m.icon}</span>
+              <p className={`text-2xl font-bold font-display leading-none ${m.color}`}>{m.value}</p>
+              <p className="text-[11px] text-muted-foreground text-center leading-tight">{m.title}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid lg:grid-cols-3 gap-6">
         {/* Left column */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card className="border">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-display text-base">Children</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid sm:grid-cols-2 gap-3">
-                {children.map(child => (
-                  <ChildProfileCard key={child.id} child={child} onClick={() => navigate(`/app/children/${child.id}`)} />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="lg:col-span-2 space-y-6">
+          {/* Children — no outer card, just a section */}
+          <div className="animate-fade-in-up" style={{ animationDelay: '80ms' }}>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Children</h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {children.map(child => (
+                <ChildProfileCard key={child.id} child={child} onClick={() => navigate(`/app/children/${child.id}`)} />
+              ))}
+            </div>
+          </div>
 
-          <Card className="border">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-display text-base">Weekly Completion</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyCompletionData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="label" tick={{ fontSize: 12 }} className="stroke-muted-foreground" />
-                    <YAxis tick={{ fontSize: 12 }} className="stroke-muted-foreground" />
-                    <Tooltip />
-                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Completed" />
-                    <Bar dataKey="value2" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} name="Assigned" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-display text-base">Monthly Token Earnings</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyTokenData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="label" tick={{ fontSize: 12 }} className="stroke-muted-foreground" />
-                    <YAxis tick={{ fontSize: 12 }} className="stroke-muted-foreground" />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="value" stroke="hsl(var(--token-gold))" strokeWidth={2} dot={{ fill: 'hsl(var(--token-gold))' }} />
-                  </LineChart>
-                </ResponsiveContainer>
+          {/* Charts — one card, two charts side by side */}
+          <Card className="border card-base animate-fade-in-up" style={{ animationDelay: '160ms' }}>
+            <CardContent className="p-5">
+              <div className="grid md:grid-cols-2 gap-6 divide-y md:divide-y-0 md:divide-x divide-border">
+                <div>
+                  <p className="text-sm font-semibold mb-4">Weekly Completion</p>
+                  <div className="h-40">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={weeklyCompletionData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="var(--color-primary)" radius={[3, 3, 0, 0]} name="Completed" />
+                        <Bar dataKey="value2" fill="var(--color-muted)" radius={[3, 3, 0, 0]} name="Assigned" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                <div className="pt-6 md:pt-0 md:pl-6">
+                  <p className="text-sm font-semibold mb-4">Monthly Token Earnings</p>
+                  <div className="h-40">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={monthlyTokenData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="value" stroke="var(--color-token-gold)" strokeWidth={2} dot={{ fill: 'var(--color-token-gold)' }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right column */}
-        <div className="space-y-4">
-          <Card className="border">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-display text-base">Token Balances</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-3">
-              {children.map(child => {
-                const summary = tokenSummaries.find(s => s.childId === child.id);
-                return (
-                  <div key={child.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span>{child.avatar}</span>
-                      <span className="text-sm font-medium">{child.name}</span>
-                    </div>
-                    <TokenBadge amount={summary?.available ?? 0} size="sm" />
+        {/* Right column — one card for both sidebar sections */}
+        <Card className="border card-base h-fit animate-fade-in-up" style={{ animationDelay: '120ms' }}>
+          <CardHeader className="pb-3 border-b">
+            <CardTitle className="font-display text-sm">Token Balances</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-3 space-y-2.5">
+            {children.map(child => {
+              const summary = tokenSummaries.find(s => s.childId === child.id);
+              return (
+                <div key={child.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span>{child.avatar}</span>
+                    <span className="text-sm font-medium">{child.name}</span>
                   </div>
-                );
-              })}
-            </CardContent>
-          </Card>
+                  <TokenBadge amount={summary?.available ?? 0} size="sm" />
+                </div>
+              );
+            })}
+          </CardContent>
 
-          <Card className="border">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Activity size={16} />
-                <CardTitle className="font-display text-base">Recent Activity</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-1">
+          <div className="border-t px-6 pb-3 pt-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Activity size={14} className="text-muted-foreground" />
+              <p className="text-sm font-semibold">Recent Activity</p>
+            </div>
+            <div className="space-y-1">
               {recentActivity.map(n => (
                 <NotificationItem key={n.id} notification={n} />
               ))}
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
+        </Card>
       </div>
     </PageContainer>
   );
