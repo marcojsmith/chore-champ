@@ -63,6 +63,8 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.333);
   --radius-2xl: calc(var(--radius) * 1.667);
+
+  --shadow-token-gold: var(--shadow-token-gold);
 }
 
 :root {
@@ -126,12 +128,10 @@
   --chart-1: oklch(0.56 0.13 175);
   --chart-2: oklch(0.73 0.17 66);
   --chart-3: oklch(0.56 0.18 148);
-  --chart-4: oklch(0.61 0.18 253);
+--chart-4: oklch(0.61 0.18 253);
   --chart-5: oklch(0.51 0.22 296);
 
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.05);
-  --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.06);
-  --shadow-sidebar: 2px 0 8px 0 rgb(0 0 0 / 0.06);
+  --shadow-token-gold: 0 4px 20px 0 oklch(0.80 0.18 82 / 0.35);
 }
 
 .dark {
@@ -185,6 +185,8 @@
   --chart-3: oklch(0.61 0.18 148);
   --chart-4: oklch(0.63 0.18 253);
   --chart-5: oklch(0.56 0.22 296);
+
+  --shadow-token-gold: 0 4px 20px 0 oklch(0.76 0.17 82 / 0.30);
 }
 
 @layer base {
@@ -212,6 +214,12 @@
   .font-body {
     font-family: var(--font-body);
   }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer components {
@@ -231,6 +239,9 @@
   }
   .glass {
     @apply bg-card/80 backdrop-blur-sm;
+  }
+  .shadow-nav-top {
+    box-shadow: 0 -2px 12px 0 rgb(0 0 0 / 0.06);
   }
 }
 

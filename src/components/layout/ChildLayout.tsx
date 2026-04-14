@@ -40,7 +40,7 @@ export function ChildLayout() {
       </main>
 
       {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t" style={{ boxShadow: '0 -2px 12px 0 rgb(0 0 0 / 0.06)' }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t shadow-nav-top">
         <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
           {bottomNavItems.map(item => {
             const active = location.pathname.startsWith(item.path);
@@ -48,7 +48,7 @@ export function ChildLayout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className="flex flex-col items-center gap-0.5 py-1 px-3 min-w-[60px] relative"
+                className="flex flex-col items-center gap-0.5 py-1 px-3 min-w-[60px] min-h-[44px] relative"
               >
                 <div className={cn(
                   'flex items-center justify-center h-9 w-9 rounded-xl transition-all duration-200',

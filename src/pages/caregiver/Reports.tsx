@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { weeklyCompletionData, monthlyTokenData, completionBreakdown, children } from '@/mocks/data';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 
-const COLORS = ['hsl(var(--success))', 'hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(var(--muted-foreground))'];
+const COLORS = ['var(--color-success)', 'var(--color-primary)', 'var(--color-destructive)', 'var(--color-muted-foreground)'];
 
 const topChores = [
   { name: 'Make Your Bed', count: 45 },
@@ -50,8 +50,8 @@ export default function Reports() {
                   <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Completed" />
-                  <Bar dataKey="value2" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} name="Total" />
+                  <Bar dataKey="value" fill="var(--color-primary)" radius={[4, 4, 0, 0]} name="Completed" />
+                  <Bar dataKey="value2" fill="var(--color-muted)" radius={[4, 4, 0, 0]} name="Total" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -68,7 +68,7 @@ export default function Reports() {
                   <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="value" stroke="hsl(var(--token-gold))" strokeWidth={2} />
+                  <Line type="monotone" dataKey="value" stroke="var(--color-token-gold)" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

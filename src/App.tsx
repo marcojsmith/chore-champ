@@ -1,6 +1,7 @@
 import { Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { CaregiverLayout } from '@/components/layout/CaregiverLayout';
@@ -40,14 +41,14 @@ const App = () => (
     <Toaster />
     <Routes>
       {/* Public */}
-      <Route element={<PublicLayout />}>
+      <Route element={<ErrorBoundary><PublicLayout /></ErrorBoundary>}>
         <Route path="/" element={<Landing />} />
         <Route path="/sign-in" element={<SignIn />} />
         <Route path="/sign-up" element={<SignUp />} />
       </Route>
 
       {/* Caregiver */}
-      <Route path="/app" element={<CaregiverLayout />}>
+      <Route path="/app" element={<ErrorBoundary><CaregiverLayout /></ErrorBoundary>}>
         <Route index element={<Navigate to="/app/dashboard" replace />} />
         <Route path="dashboard" element={<CaregiverDashboard />} />
         <Route path="chores" element={<ChoresList />} />
@@ -65,7 +66,7 @@ const App = () => (
       </Route>
 
       {/* Child */}
-      <Route path="/child" element={<ChildLayout />}>
+      <Route path="/child" element={<ErrorBoundary><ChildLayout /></ErrorBoundary>}>
         <Route index element={<Navigate to="/child/dashboard" replace />} />
         <Route path="dashboard" element={<ChildDashboard />} />
         <Route path="chores" element={<MyChores />} />

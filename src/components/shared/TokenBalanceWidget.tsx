@@ -14,7 +14,7 @@ export function TokenBalanceWidget({ available, reserved, totalEarned, totalSpen
       className="rounded-lg p-5 relative overflow-hidden"
       style={{
         background: 'linear-gradient(135deg, oklch(0.82 0.19 82) 0%, oklch(0.75 0.16 72) 100%)',
-        boxShadow: '0 4px 20px 0 oklch(0.80 0.18 82 / 0.35)',
+        boxShadow: 'var(--shadow-token-gold)',
       }}
     >
       {/* Decorative circles */}

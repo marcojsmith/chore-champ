@@ -27,8 +27,8 @@ export default function CaregiverDashboard() {
   return (
     <PageContainer title="Dashboard" subtitle="Welcome back! Here's what's happening today.">
       {/* Inline stats bar — single surface, no individual cards */}
-      <div className="bg-card border rounded-lg overflow-hidden mb-6 card-base animate-fade-in-up">
-        <div className="flex overflow-x-auto snap-x divide-x divide-border">
+      <div className="bg-card border rounded-lg overflow-hidden mb-6 card-base animate-fade-in-up relative">
+        <div className="flex overflow-x-auto snap-x divide-x divide-border scrollbar-none">
           {metrics.map(m => (
             <div key={m.title} className={cn(
               'flex flex-col items-center justify-center py-4 px-2 gap-1 snap-start shrink-0 min-w-[90px]',
@@ -40,6 +40,7 @@ export default function CaregiverDashboard() {
             </div>
           ))}
         </div>
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent" aria-hidden="true" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
