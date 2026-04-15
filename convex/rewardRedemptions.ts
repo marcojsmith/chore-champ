@@ -192,3 +192,16 @@ export const reject = mutation({
     return null;
   },
 });
+
+export const listByRewardId = query({
+  args: { rewardId: v.id("rewards") },
+  handler: async (ctx, args) => {
+    const caregiver = await requireCaregiver(ctx);
+    const redemptions = await ctx.db
+      .query("rewardRedemptions")
+      .withIndex("by_rewardId", q => q.eq("rewardId", args.rewardId))
+      .order("desc")
+      .take(20);
+    return redemptions.filter(r => r.householdId === caregiver.householdId);
+  },
+});

@@ -514,3 +514,16 @@ export const getPhotoUrl = query({
     return await ctx.storage.getUrl(args.storageId);
   },
 });
+
+export const listByChoreId = query({
+  args: { choreId: v.id("chores") },
+  handler: async (ctx, args) => {
+    const caregiver = await requireCaregiver(ctx);
+    const occurrences = await ctx.db
+      .query("choreOccurrences")
+      .withIndex("by_choreId", q => q.eq("choreId", args.choreId))
+      .order("desc")
+      .take(20);
+    return occurrences.filter(o => o.householdId === caregiver.householdId);
+  },
+});

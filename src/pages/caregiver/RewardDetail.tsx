@@ -4,16 +4,26 @@ import { api } from 'convex/_generated/api';
 import type { Id } from 'convex/_generated/dataModel';
 import { PageContainer } from '@/components/shared/PageContainer';
 import { TokenBadge } from '@/components/shared/TokenBadge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+
+function formatDate(timestamp: number) {
+  return new Date(timestamp).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
 
 export default function RewardDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const reward = useQuery(api.rewards.get, id ? { rewardId: id as Id<"rewards"> } : "skip");
   const childrenList = useQuery(api.users.listChildren) ?? [];
+  const redemptionHistory = useQuery(api.rewardRedemptions.listByRewardId, id ? { rewardId: id as Id<"rewards"> } : "skip") ?? [];
   const setActive = useMutation(api.rewards.setActive);
 
   if (!reward) return <PageContainer title="Loading..."><p>Loading...</p></PageContainer>;
@@ -71,7 +81,30 @@ export default function RewardDetail() {
         <Card className="border">
           <CardHeader className="pb-3"><CardTitle className="text-base font-display">Redemption History</CardTitle></CardHeader>
           <CardContent className="pt-0 space-y-2">
-            <p className="text-sm text-muted-foreground">Coming soon</p>
+            {redemptionHistory.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No redemptions yet</p>
+            ) : (
+              redemptionHistory.map(redemption => {
+                const child = childrenList.find(c => c._id === redemption.childId);
+                return (
+                  <div key={redemption._id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{child?.avatar ?? '👤'}</span>
+                      <span className="text-sm font-medium">{child?.name ?? 'Unknown'}</span>
+                      <StatusBadge status={redemption.status} />
+                    </div>
+                    <div className="text-right">
+                      {redemption.resolvedAt ? (
+                        <span className="text-xs text-muted-foreground block">{formatDate(redemption.resolvedAt)}</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground block">Pending</span>
+                      )}
+                      <TokenBadge amount={redemption.tokenCost} size="sm" />
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </CardContent>
         </Card>
 

@@ -10,6 +10,16 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit, Copy, Archive, Clock, Camera, Repeat, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
+function formatDate(timestamp: number) {
+  return new Date(timestamp).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
 const recurrenceLabels = { once: 'One-time', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
 
 export default function ChoreDetail() {
@@ -17,6 +27,7 @@ export default function ChoreDetail() {
   const navigate = useNavigate();
   const chore = useQuery(api.chores.get, id ? { choreId: id as Id<"chores"> } : "skip");
   const childrenList = useQuery(api.users.listChildren) ?? [];
+  const recentOccurrences = useQuery(api.choreOccurrences.listByChoreId, id ? { choreId: id as Id<"chores"> } : "skip") ?? [];
   const setActive = useMutation(api.chores.setActive);
 
   if (!chore) return <PageContainer title="Loading..."><p>Loading...</p></PageContainer>;
@@ -104,11 +115,34 @@ export default function ChoreDetail() {
           </CardContent>
         </Card>
 
-        {/* Recent completions - todo: wire to occurrences query */}
+        {/* Recent completions */}
         <Card className="border">
           <CardHeader className="pb-3"><CardTitle className="text-base font-display">Recent Completions</CardTitle></CardHeader>
           <CardContent className="pt-0">
-            <p className="text-sm text-muted-foreground">Coming soon</p>
+            {recentOccurrences.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No completions yet</p>
+            ) : (
+              <div className="space-y-2">
+                {recentOccurrences.map(occ => {
+                  const child = childrenList.find(c => c._id === occ.childId);
+                  return (
+                    <div key={occ._id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{child?.avatar ?? '👤'}</span>
+                        <span className="text-sm font-medium">{child?.name ?? 'Unknown'}</span>
+                        <StatusBadge status={occ.status} />
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-muted-foreground block">{formatDate(occ.completedAt ?? occ.dueDate)}</span>
+                        {occ.status === 'approved' && occ.tokensEarned !== undefined && (
+                          <TokenBadge amount={occ.tokensEarned} size="sm" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
