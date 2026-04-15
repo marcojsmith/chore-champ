@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getCurrentUser, requireCaregiver } from "./lib";
+import { getCurrentUser, requireCaregiver, requireUser } from "./lib";
 
 export const getMe = query({
   args: {},
@@ -110,5 +110,40 @@ export const getChildStats = query({
       .withIndex("by_childId", q => q.eq("childId", args.childId))
       .unique();
     return stats ?? null;
+  },
+});
+
+export const getAllChildStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const caregiver = await requireCaregiver(ctx);
+    const children = await ctx.db
+      .query("users")
+      .withIndex("by_householdId_and_role", q => q.eq("householdId", caregiver.householdId).eq("role", "child"))
+      .take(50);
+
+    const statsMap: Record<string, { tokenBalance: number; currentStreak: number; completionRate: number }> = {};
+    for (const child of children) {
+      const stats = await ctx.db
+        .query("childStats")
+        .withIndex("by_childId", q => q.eq("childId", child._id))
+        .unique();
+      if (stats) {
+        statsMap[child._id] = { tokenBalance: stats.tokenBalance, currentStreak: stats.currentStreak, completionRate: stats.completionRate };
+      }
+    }
+    return statsMap;
+  },
+});
+
+export const updateMe = mutation({
+  args: { name: v.optional(v.string()), avatar: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await requireUser(ctx);
+    const updates: { name?: string; avatar?: string } = {};
+    if (args.name) updates.name = args.name;
+    if (args.avatar) updates.avatar = args.avatar;
+    await ctx.db.patch(user._id, updates);
+    return null;
   },
 });

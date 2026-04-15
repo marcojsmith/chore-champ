@@ -1,17 +1,22 @@
 import type { Child } from '@/mocks/data';
 import { ProgressRing } from './ProgressRing';
 import { StreakBadge } from './StreakBadge';
-import { tokenSummaries } from '@/mocks/data';
 import { TokenBadge } from './TokenBadge';
 import { cn } from '@/lib/utils';
 
+interface ChildStats {
+  tokenBalance: number;
+  currentStreak: number;
+  completionRate: number;
+}
+
 interface ChildProfileCardProps {
   child: Child;
+  stats?: ChildStats | null;
   onClick?: () => void;
 }
 
-export function ChildProfileCard({ child, onClick }: ChildProfileCardProps) {
-  const summary = tokenSummaries.find(s => s.childId === child.id);
+export function ChildProfileCard({ child, stats, onClick }: ChildProfileCardProps) {
   return (
     <div
       className={cn(
@@ -33,8 +38,8 @@ export function ChildProfileCard({ child, onClick }: ChildProfileCardProps) {
         </ProgressRing>
       </div>
       <div className="flex items-center gap-2 pt-2 border-t border-border/50">
-        <StreakBadge streak={child.currentStreak} />
-        {summary && <TokenBadge amount={summary.available} size="sm" />}
+        <StreakBadge streak={stats?.currentStreak ?? 0} />
+        {stats && <TokenBadge amount={stats.tokenBalance} size="sm" />}
       </div>
     </div>
   );

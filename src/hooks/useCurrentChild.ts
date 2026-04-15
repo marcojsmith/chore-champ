@@ -1,13 +1,17 @@
-import { children, tokenSummaries } from '@/mocks/data';
-import type { Child } from '@/types';
+import { useQuery } from 'convex/react';
+import { api } from 'convex/_generated/api';
 
-/**
- * Returns the currently logged-in child with computed tokenBalance.
- * Prototype: always returns first child.
- * Production: derive childId from Clerk user identity + Convex lookup.
- */
-export function useCurrentChild(): Child {
-  const child = children[0];
-  const summary = tokenSummaries.find(s => s.childId === child.id) ?? tokenSummaries[0];
-  return { ...child, tokenBalance: summary.available };
+export function useCurrentChild() {
+  const me = useQuery(api.users.getMe);
+  const childStats = useQuery(api.users.getChildStats, me ? { childId: me._id } : 'skip');
+
+  return {
+    _id: me?._id ?? '',
+    name: me?.name ?? '',
+    avatar: me?.avatar ?? '🐱',
+    age: me?.age ?? 0,
+    tokenBalance: childStats?.tokenBalance ?? 0,
+    currentStreak: childStats?.currentStreak ?? 0,
+    isLoading: me === undefined || childStats === undefined,
+  };
 }

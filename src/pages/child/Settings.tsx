@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useCurrentChild } from '@/hooks/useCurrentChild';
+import { useQuery } from 'convex/react';
+import { api } from 'convex/_generated/api';
 import { PageContainer } from '@/components/shared/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -17,7 +18,8 @@ const themes = [
 ];
 
 export default function ChildSettings() {
-  const child = useCurrentChild();
+  const me = useQuery(api.users.getMe);
+  const childStats = useQuery(api.users.getChildStats, me ? { childId: me._id } : 'skip');
   const { signOut } = useClerk();
 
   const [notifications, setNotifications] = useState({
@@ -27,6 +29,10 @@ export default function ChildSettings() {
   });
   const [selectedTheme, setSelectedTheme] = useState('default');
 
+  if (me === undefined || childStats === undefined || me === null) {
+    return <PageContainer title="Settings">Loading...</PageContainer>;
+  }
+
   return (
     <PageContainer title="Settings">
       <div className="space-y-4">
@@ -34,14 +40,14 @@ export default function ChildSettings() {
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 rounded-2xl bg-accent/10 flex items-center justify-center text-4xl">
-                {child.avatar}
+                {me.avatar ?? '🐱'}
               </div>
               <div>
-                <h2 className="text-xl font-bold font-display">{child.name}</h2>
-                <p className="text-sm text-muted-foreground">Age {child.age}</p>
+                <h2 className="text-xl font-bold font-display">{me.name ?? 'Child'}</h2>
+                <p className="text-sm text-muted-foreground">Age {me.age ?? 0}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <TokenBadge amount={child.tokenBalance} size="sm" />
-                  <StreakBadge streak={child.currentStreak} />
+                  <TokenBadge amount={childStats?.tokenBalance ?? 0} size="sm" />
+                  <StreakBadge streak={childStats?.currentStreak ?? 0} />
                 </div>
               </div>
             </div>

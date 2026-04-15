@@ -1,6 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { getCurrentUser } from "./lib";
+import { getCurrentUser, requireCaregiver } from "./lib";
 
 export const create = mutation({
   args: { name: v.string() },
@@ -42,5 +42,14 @@ export const getMyHousehold = query({
     if (!user) return null;
     const household = await ctx.db.get("households", user.householdId);
     return household;
+  },
+});
+
+export const updateHousehold = mutation({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    const caregiver = await requireCaregiver(ctx);
+    await ctx.db.patch(caregiver.householdId, { name: args.name });
+    return null;
   },
 });

@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { choreCategories } from '@/mocks/data';
+import { choreCategories } from '@/lib/constants';
 import { TokenBadge } from '@/components/shared/TokenBadge';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';

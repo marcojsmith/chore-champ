@@ -6,7 +6,7 @@ import { NotificationItem } from '@/components/shared/NotificationItem';
 import { TokenBadge } from '@/components/shared/TokenBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MetricBarSkeleton } from '@/components/shared/skeletons';
-import { type Notification, weeklyCompletionData, monthlyTokenData, notifications as mockNotifications, tokenSummaries } from '@/mocks/data';
+import { type Notification } from '@/mocks/data';
 import { ListChecks, CheckCircle2, AlertTriangle, ClipboardCheck, Gift, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
@@ -17,8 +17,13 @@ export default function CaregiverDashboard() {
   const dashboardData = useQuery(api.choreOccurrences.getDashboardMetrics);
   const children = useQuery(api.users.listChildren);
   const notifications = useQuery(api.notifications.listMine);
+  const childStatsMap = useQuery(api.users.getAllChildStats);
+  const reportsData = useQuery(api.choreOccurrences.getReportsData, {});
 
-  const recentActivity = notifications?.slice(0, 5) ?? mockNotifications.filter(n => n.userId === 'cg1').slice(0, 5);
+  const weeklyCompletion = reportsData?.weeklyCompletion.map(d => ({ label: d.label, value: d.completed, value2: d.total })) ?? [];
+  const monthlyTokens = reportsData?.weeklyTokens.map(d => ({ label: d.label, value: d.value })) ?? [];
+
+  const recentActivity = notifications?.slice(0, 5) ?? [];
 
   const metricsValues = dashboardData ?? { choresDue: 0, choresCompleted: 0, overdueChores: 0, pendingApprovals: 0, pendingRewardRequests: 0 };
   const metricsWithValues = [
@@ -59,9 +64,17 @@ export default function CaregiverDashboard() {
           <div className="animate-fade-in-up" style={{ animationDelay: '80ms' }}>
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Children</h2>
             <div className="grid sm:grid-cols-2 gap-3">
-              {(children ?? []).map(child => (
-                <ChildProfileCard key={child._id} child={{ id: child._id, name: child.name, age: child.age ?? 0, avatar: child.avatar, currentStreak: 0, longestStreak: 0, completionRate: 0 }} onClick={() => navigate(`/app/children/${child._id}`)} />
-              ))}
+              {(children ?? []).map(child => {
+                const stats = childStatsMap?.[child._id];
+                return (
+                  <ChildProfileCard 
+                    key={child._id} 
+                    child={{ id: child._id, name: child.name, age: child.age ?? 0, avatar: child.avatar, currentStreak: 0, longestStreak: 0, completionRate: stats?.completionRate ?? 0 }} 
+                    stats={stats} 
+                    onClick={() => navigate(`/app/children/${child._id}`)} 
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -73,7 +86,7 @@ export default function CaregiverDashboard() {
                   <p className="text-sm font-semibold mb-4">Weekly Completion</p>
                   <div className="h-40">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={weeklyCompletionData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                      <BarChart data={weeklyCompletion} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                         <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                         <YAxis tick={{ fontSize: 11 }} />
@@ -88,7 +101,7 @@ export default function CaregiverDashboard() {
                   <p className="text-sm font-semibold mb-4">Monthly Token Earnings</p>
                   <div className="h-40">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={monthlyTokenData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                      <LineChart data={monthlyTokens} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                         <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                         <YAxis tick={{ fontSize: 11 }} />
@@ -110,14 +123,14 @@ export default function CaregiverDashboard() {
           </CardHeader>
           <CardContent className="pt-3 space-y-2.5">
             {(children ?? []).map(child => {
-              const summary = tokenSummaries.find(s => s.childId === child._id);
+              const stats = childStatsMap?.[child._id];
               return (
                 <div key={child._id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span>{child.avatar}</span>
                     <span className="text-sm font-medium">{child.name}</span>
                   </div>
-                  <TokenBadge amount={summary?.available ?? 0} size="sm" />
+                  <TokenBadge amount={stats?.tokenBalance ?? 0} size="sm" />
                 </div>
               );
             })}
@@ -129,24 +142,17 @@ export default function CaregiverDashboard() {
               <p className="text-sm font-semibold">Recent Activity</p>
             </div>
             <div className="space-y-1">
-              {recentActivity.map(n => {
-                const notifId = '_id' in n ? n._id : n.id;
-                const notifCreatedAt = '_creationTime' in n ? new Date(n._creationTime).toISOString() : n.createdAt;
-                const notifType = '_id' in n 
-                  ? (n.type === 'chore_rejected' || n.type === 'reward_rejected' ? 'chore_approved' as Notification['type'] : n.type as Notification['type'])
-                  : n.type;
-                return (
-                  <NotificationItem key={notifId} notification={{
-                    id: notifId,
-                    userId: '',
-                    title: n.title,
-                    body: n.body,
-                    read: n.read,
-                    createdAt: notifCreatedAt,
-                    type: notifType,
-                  }} />
-                );
-              })}
+              {recentActivity.map((n) => (
+                <NotificationItem key={n._id} notification={{
+                  id: n._id,
+                  userId: n.userId ?? '',
+                  title: n.title,
+                  body: n.body ?? '',
+                  read: n.read ?? false,
+                  createdAt: new Date(n._creationTime).toISOString(),
+                  type: n.type as Notification['type'],
+                }} />
+              ))}
             </div>
           </div>
         </Card>

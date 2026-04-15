@@ -1,0 +1,2 @@
+export const choreCategories = ['Bedroom', 'Kitchen', 'Bathroom', 'Living Room', 'Garden', 'Laundry', 'Homework', 'Personal', 'Pets', 'Other'];
+export const rewardCategories = ['Screen Time', 'Food & Treats', 'Activities', 'Toys & Games', 'Money', 'Privileges', 'Other'];

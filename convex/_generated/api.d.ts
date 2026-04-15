@@ -10,6 +10,7 @@
 
 import type * as choreOccurrences from "../choreOccurrences.js";
 import type * as chores from "../chores.js";
+import type * as crons from "../crons.js";
 import type * as households from "../households.js";
 import type * as lib from "../lib.js";
 import type * as notifications from "../notifications.js";
@@ -26,6 +27,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   choreOccurrences: typeof choreOccurrences;
   chores: typeof chores;
+  crons: typeof crons;
   households: typeof households;
   lib: typeof lib;
   notifications: typeof notifications;
