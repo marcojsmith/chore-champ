@@ -65,6 +65,7 @@ export default function Approvals() {
                   dueDate: new Date(o.dueDate).toISOString(),
                   completedAt: o.completedAt ? new Date(o.completedAt).toISOString() : undefined,
                   tokensEarned: o.tokensEarned,
+                  photoStorageId: o.photoStorageId,
                 }}
                   onApprove={async () => {
                     try {

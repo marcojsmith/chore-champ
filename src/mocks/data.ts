@@ -54,6 +54,7 @@ export type ChoreOccurrence = {
   completedAt?: string;
   tokensEarned?: number;
   photoUrl?: string;
+  photoStorageId?: string;
 };
 
 export type Reward = {

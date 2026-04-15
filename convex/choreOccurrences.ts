@@ -2,6 +2,8 @@ import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireCaregiver, requireUser } from "./lib";
 import type { Doc } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 
 type ChoreOccurrenceEnriched = Omit<Doc<"choreOccurrences">, "householdId"> & {
   choreTitle: string;
@@ -10,6 +12,40 @@ type ChoreOccurrenceEnriched = Omit<Doc<"choreOccurrences">, "householdId"> & {
   photoProofRequired: boolean;
   approvalMode: "auto" | "manual";
 };
+
+async function updateStreak(ctx: MutationCtx, childId: Id<"users">) {
+  const approved = await ctx.db
+    .query("choreOccurrences")
+    .withIndex("by_childId_and_status", q => q.eq("childId", childId).eq("status", "approved"))
+    .order("desc")
+    .take(500);
+
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let i = 0; i < 365; i++) {
+    const dayStart = today.getTime() - i * 24 * 60 * 60 * 1000;
+    const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+    const hasCompletion = approved.some(o => (o.completedAt ?? 0) >= dayStart && (o.completedAt ?? 0) < dayEnd);
+    if (hasCompletion) {
+      streak++;
+    } else if (i > 0) {
+      break;
+    }
+  }
+
+  const stats = await ctx.db
+    .query("childStats")
+    .withIndex("by_childId", q => q.eq("childId", childId))
+    .unique();
+  if (stats) {
+    await ctx.db.patch(stats._id, {
+      currentStreak: streak,
+      longestStreak: Math.max(stats.longestStreak, streak),
+    });
+  }
+}
 
 const statusType = v.union(
   v.literal("scheduled"),
@@ -152,6 +188,8 @@ export const approve = mutation({
       read: false,
     });
 
+    await updateStreak(ctx, occurrence.childId);
+
     return null;
   },
 });
@@ -242,6 +280,8 @@ export const submit = mutation({
           read: false,
         });
       }
+
+      await updateStreak(ctx, occurrence.childId);
     } else {
       await ctx.db.patch(args.occurrenceId, {
         status: "pending_approval",
@@ -464,5 +504,13 @@ export const getReportsData = query({
     }));
 
     return { weeklyCompletion, weeklyTokens, statusBreakdown, topChores };
+  },
+});
+
+export const getPhotoUrl = query({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    await requireUser(ctx);
+    return await ctx.storage.getUrl(args.storageId);
   },
 });
