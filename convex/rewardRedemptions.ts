@@ -134,6 +134,14 @@ export const approve = mutation({
       resolvedAt: Date.now(),
     });
 
+    await ctx.db.insert("tokenLedger", {
+      householdId: user.householdId,
+      childId: redemption.childId,
+      amount: -redemption.tokenCost,
+      type: "reward_spent",
+      relatedId: redemption._id,
+    });
+
     const reward = await ctx.db.get(redemption.rewardId);
     if (reward) {
       await ctx.db.insert("notifications", {

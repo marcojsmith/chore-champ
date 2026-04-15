@@ -130,4 +130,21 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_userId_and_read", ["userId", "read"])
     .index("by_householdId", ["householdId"]),
+
+  tokenLedger: defineTable({
+    householdId: v.id("households"),
+    childId: v.id("users"),
+    amount: v.number(),
+    type: v.union(
+      v.literal("chore_earned"),
+      v.literal("reward_spent"),
+      v.literal("bonus"),
+      v.literal("adjustment")
+    ),
+    relatedId: v.optional(v.string()),
+    note: v.optional(v.string()),
+  })
+    .index("by_childId", ["childId"])
+    .index("by_childId_and_type", ["childId", "type"])
+    .index("by_householdId", ["householdId"]),
 });

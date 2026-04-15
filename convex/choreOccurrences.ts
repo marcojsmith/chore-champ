@@ -20,6 +20,15 @@ async function updateStreak(ctx: MutationCtx, childId: Id<"users">) {
     .order("desc")
     .take(500);
 
+  const missedOccurrences = await ctx.db
+    .query("choreOccurrences")
+    .withIndex("by_childId_and_status", q => q.eq("childId", childId).eq("status", "overdue"))
+    .take(500);
+  const rejectedOccurrences = await ctx.db
+    .query("choreOccurrences")
+    .withIndex("by_childId_and_status", q => q.eq("childId", childId).eq("status", "rejected"))
+    .take(500);
+
   let streak = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -35,6 +44,12 @@ async function updateStreak(ctx: MutationCtx, childId: Id<"users">) {
     }
   }
 
+  const totalCompleted = approved.length;
+  const totalMissed = missedOccurrences.length + rejectedOccurrences.length;
+  const completionRate = totalCompleted + totalMissed > 0
+    ? Math.round((totalCompleted / (totalCompleted + totalMissed)) * 100)
+    : 0;
+
   const stats = await ctx.db
     .query("childStats")
     .withIndex("by_childId", q => q.eq("childId", childId))
@@ -43,6 +58,7 @@ async function updateStreak(ctx: MutationCtx, childId: Id<"users">) {
     await ctx.db.patch(stats._id, {
       currentStreak: streak,
       longestStreak: Math.max(stats.longestStreak, streak),
+      completionRate,
     });
   }
 }
@@ -188,6 +204,14 @@ export const approve = mutation({
       read: false,
     });
 
+    await ctx.db.insert("tokenLedger", {
+      householdId: hId,
+      childId: occurrence.childId,
+      amount: tokensToAward,
+      type: "chore_earned",
+      relatedId: args.occurrenceId,
+    });
+
     await updateStreak(ctx, occurrence.childId);
 
     return null;
@@ -280,6 +304,14 @@ export const submit = mutation({
           read: false,
         });
       }
+
+      await ctx.db.insert("tokenLedger", {
+          householdId: occurrence.householdId,
+          childId: occurrence.childId,
+          amount: chore.baseTokens,
+          type: "chore_earned",
+          relatedId: args.occurrenceId,
+        });
 
       await updateStreak(ctx, occurrence.childId);
     } else {
