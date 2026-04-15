@@ -29,6 +29,7 @@ export default function ChoreDetail() {
   const childrenList = useQuery(api.users.listChildren) ?? [];
   const recentOccurrences = useQuery(api.choreOccurrences.listByChoreId, id ? { choreId: id as Id<"chores"> } : "skip") ?? [];
   const setActive = useMutation(api.chores.setActive);
+  const duplicateChore = useMutation(api.chores.create);
 
   if (!chore) return <PageContainer title="Loading..."><p>Loading...</p></PageContainer>;
 
@@ -41,6 +42,32 @@ export default function ChoreDetail() {
       navigate('/app/chores');
     } catch {
       toast.error('Failed to archive chore');
+    }
+  };
+
+  const handleDuplicate = async () => {
+    if (!chore) return;
+    try {
+      const newId = await duplicateChore({
+        title: `Copy of ${chore.title}`,
+        description: chore.description,
+        category: chore.category,
+        recurrence: chore.recurrence,
+        isRequired: chore.isRequired,
+        approvalMode: chore.approvalMode,
+        photoProofRequired: chore.photoProofRequired,
+        baseTokens: chore.baseTokens,
+        earlyCompletionBonus: chore.earlyCompletionBonus,
+        earlyBonusValue: chore.earlyBonusValue,
+        streakBonus: chore.streakBonus,
+        streakBonusValue: chore.streakBonusValue,
+        assignedChildIds: chore.assignedChildIds,
+        dueTime: chore.dueTime,
+      });
+      toast.success('Chore duplicated!');
+      navigate(`/app/chores/${newId}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to duplicate chore');
     }
   };
 
@@ -149,7 +176,7 @@ export default function ChoreDetail() {
         {/* Actions */}
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1" onClick={() => navigate(`/app/chores/${id}/edit`)}><Edit size={14} className="mr-1" /> Edit</Button>
-          <Button variant="outline" className="flex-1"><Copy size={14} className="mr-1" /> Duplicate</Button>
+          <Button variant="outline" className="flex-1" onClick={handleDuplicate}><Copy size={14} className="mr-1" /> Duplicate</Button>
           <Button variant="outline" className="flex-1 text-destructive" onClick={handleArchive}><Archive size={14} className="mr-1" /> Archive</Button>
         </div>
       </div>

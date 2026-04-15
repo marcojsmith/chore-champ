@@ -98,6 +98,19 @@ export const markOverdueOccurrences = internalMutation({
   },
 });
 
+export const resetWeeklyStats = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const stats = await ctx.db.query("childStats").take(500);
+
+    for (const stat of stats) {
+      await ctx.db.patch(stat._id, { earnedThisWeek: 0 });
+    }
+
+    return null;
+  },
+});
+
 const crons = cronJobs();
 
 crons.cron(
@@ -111,6 +124,13 @@ crons.cron(
   "mark overdue occurrences",
   "0 * * * *",
   internal.crons.markOverdueOccurrences,
+  {}
+);
+
+crons.cron(
+  "reset weekly stats",
+  "0 0 * * 1",
+  internal.crons.resetWeeklyStats,
   {}
 );
 
