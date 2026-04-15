@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireCaregiver, requireUser } from "./lib";
 import type { Doc } from "./_generated/dataModel";
@@ -269,23 +269,16 @@ export const submit = mutation({
   },
 });
 
-export const create = mutation({
-  args: { choreId: v.id("chores"), childId: v.id("users"), dueDate: v.number() },
+export const create = internalMutation({
+  args: {
+    householdId: v.id("households"),
+    choreId: v.id("chores"),
+    childId: v.id("users"),
+    dueDate: v.number(),
+  },
   handler: async (ctx, args) => {
-    const caregiver = await requireCaregiver(ctx);
-    const hId = caregiver.householdId;
-
-    const chore = await ctx.db.get("chores", args.choreId);
-    if (!chore) throw new Error("Chore not found");
-    if (chore.householdId !== hId) throw new Error("Unauthorized");
-
-    const child = await ctx.db.get("users", args.childId);
-    if (!child) throw new Error("Child not found");
-    if (child.householdId !== hId) throw new Error("Unauthorized");
-    if (child.role !== "child") throw new Error("Not a child");
-
     const occurrenceId = await ctx.db.insert("choreOccurrences", {
-      householdId: hId,
+      householdId: args.householdId,
       choreId: args.choreId,
       childId: args.childId,
       status: "scheduled",
