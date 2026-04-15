@@ -269,6 +269,14 @@ export const submit = mutation({
   },
 });
 
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireUser(ctx);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
 export const create = internalMutation({
   args: {
     householdId: v.id("households"),

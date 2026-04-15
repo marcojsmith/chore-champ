@@ -1,13 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from 'convex/_generated/api';
+import type { Id } from 'convex/_generated/dataModel';
 import { PageContainer } from '@/components/shared/PageContainer';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { TokenBadge } from '@/components/shared/TokenBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Camera, Clock, CheckCircle2, ImagePlus } from 'lucide-react';
+import { ArrowLeft, Camera, Clock, CheckCircle2, ImagePlus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -15,16 +16,44 @@ export default function ChildChoreDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const submitChore = useMutation(api.choreOccurrences.submit);
+  const getUploadUrl = useMutation(api.choreOccurrences.generateUploadUrl);
   const occurrences = useQuery(api.choreOccurrences.listForChildEnriched, {}) ?? [];
   const occurrence = occurrences.find(o => o._id === id);
 
   if (!occurrence) return <PageContainer title="Loading..."><p>Loading...</p></PageContainer>;
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleComplete = async () => {
     try {
-      await submitChore({ occurrenceId: occurrence._id });
+      if (occurrence.photoProofRequired && !photoFile) {
+        toast.error('Please upload a photo');
+        return;
+      }
+
+      if (photoFile) {
+        const uploadUrl = await getUploadUrl({});
+        const result = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': photoFile.type },
+          body: photoFile,
+        });
+        const { storageId } = await result.json() as { storageId: Id<'_storage'> };
+        await submitChore({ occurrenceId: occurrence._id, photoStorageId: storageId });
+      } else {
+        await submitChore({ occurrenceId: occurrence._id });
+      }
       setSubmitted(true);
       toast.success('Chore completed! 🎉 Great job!');
     } catch {
@@ -70,11 +99,44 @@ export default function ChildChoreDetail() {
         </Card>
 
         {occurrence.photoProofRequired && !submitted && (
-          <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors">
-            <ImagePlus size={32} className="mx-auto mb-2" />
-            <p className="text-sm font-medium">Upload Photo Proof</p>
-            <p className="text-xs">Take a photo to prove completion (coming soon)</p>
-          </div>
+          <>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              ref={fileInputRef}
+              onChange={handlePhotoChange}
+              className="hidden"
+            />
+            <div
+              className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {photoPreview ? (
+                <div className="relative">
+                  <img src={photoPreview} alt="Photo preview" className="max-h-48 mx-auto rounded-lg" />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPhotoFile(null);
+                      setPhotoPreview(null);
+                    }}
+                  >
+                    <X size={14} />
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <ImagePlus size={32} className="mx-auto mb-2" />
+                  <p className="text-sm font-medium">Upload Photo Proof</p>
+                  <p className="text-xs">Tap to take or upload a photo</p>
+                </>
+              )}
+            </div>
+          </>
         )}
 
         {submitted ? (
