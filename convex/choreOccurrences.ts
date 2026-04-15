@@ -332,3 +332,129 @@ export const getDashboardMetrics = query({
     };
   },
 });
+
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+type WeeklyCompletion = { label: string; completed: number; total: number };
+type WeeklyTokens = { label: string; value: number };
+type StatusBreakdown = { label: string; value: number };
+type TopChore = { name: string; count: number };
+
+export const getReportsData = query({
+  args: { childId: v.optional(v.id("users")), days: v.optional(v.number()) },
+  handler: async (ctx, args): Promise<{
+    weeklyCompletion: WeeklyCompletion[];
+    weeklyTokens: WeeklyTokens[];
+    statusBreakdown: StatusBreakdown[];
+    topChores: TopChore[];
+  }> => {
+    const caregiver = await requireCaregiver(ctx);
+    const hId = caregiver.householdId;
+    const days = args.days ?? 30;
+    const startTime = Date.now() - days * 24 * 60 * 60 * 1000;
+    const targetChildId = args.childId;
+
+    const statuses = ["approved", "pending_approval", "rejected", "overdue"] as const;
+    const allOccurrences: Doc<"choreOccurrences">[] = [];
+
+    for (const status of statuses) {
+      const occs = await ctx.db
+        .query("choreOccurrences")
+        .withIndex("by_householdId_and_status", q => q.eq("householdId", hId).eq("status", status))
+        .take(500);
+      allOccurrences.push(...occs);
+    }
+
+    const filteredOccurrences = targetChildId
+      ? allOccurrences.filter(o => o.childId === targetChildId)
+      : allOccurrences;
+
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - dayOfWeek);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const weeklyCompletion: WeeklyCompletion[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayDate = new Date(startOfWeek);
+      dayDate.setDate(startOfWeek.getDate() - i);
+      const dayStart = dayDate.getTime();
+      const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+
+      const completed = filteredOccurrences.filter(
+        o => (o.completedAt ?? 0) >= dayStart && (o.completedAt ?? 0) < dayEnd && o.status === "approved"
+      ).length;
+      const total = filteredOccurrences.filter(
+        o => o.dueDate >= dayStart && o.dueDate < dayEnd
+      ).length;
+
+      weeklyCompletion.push({
+        label: DAY_LABELS[dayDate.getDay()],
+        completed,
+        total,
+      });
+    }
+
+    const weeklyTokens: WeeklyTokens[] = [];
+    const approvedOccs = filteredOccurrences.filter(o => o.status === "approved" && (o.tokensEarned ?? 0) > 0);
+    for (let w = 0; w < 4; w++) {
+      const weekEnd = startTime + (w + 1) * 7 * 24 * 60 * 60 * 1000;
+      const weekStart = startTime + w * 7 * 24 * 60 * 60 * 1000;
+      const tokens = approvedOccs
+        .filter(o => (o.completedAt ?? 0) >= weekStart && (o.completedAt ?? 0) < weekEnd)
+        .reduce((sum, o) => sum + (o.tokensEarned ?? 0), 0);
+      weeklyTokens.push({ label: `Wk ${w + 1}`, value: tokens });
+    }
+
+    const statusCounts: Record<string, number> = {
+      approved: 0,
+      pending_approval: 0,
+      rejected: 0,
+      overdue: 0,
+    };
+    for (const occ of filteredOccurrences) {
+      if (statusCounts[occ.status] !== undefined) {
+        statusCounts[occ.status]++;
+      }
+    }
+
+    const statusLabels: Record<string, string> = {
+      approved: "Approved",
+      pending_approval: "Pending",
+      rejected: "Rejected",
+      overdue: "Overdue",
+    };
+    const statusBreakdown: StatusBreakdown[] = Object.entries(statusCounts)
+      .filter(([, count]) => count > 0)
+      .map(([status, count]) => ({
+        label: statusLabels[status] ?? status,
+        value: count,
+      }));
+
+    const choreCounts: Record<string, number> = {};
+    const choreTitles: Record<string, string> = {};
+    for (const occ of filteredOccurrences) {
+      if (occ.status === "approved") {
+        choreCounts[occ.choreId] = (choreCounts[occ.choreId] ?? 0) + 1;
+      }
+      if (!choreTitles[occ.choreId]) {
+        const choreDoc = await ctx.db.get("chores", occ.choreId);
+        if (choreDoc) {
+          choreTitles[occ.choreId] = choreDoc.title;
+        }
+      }
+    }
+
+    const sortedChores = Object.entries(choreCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+
+    const topChores: TopChore[] = sortedChores.map(([choreId, count]) => ({
+      name: choreTitles[choreId] ?? "Unknown",
+      count,
+    }));
+
+    return { weeklyCompletion, weeklyTokens, statusBreakdown, topChores };
+  },
+});
