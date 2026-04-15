@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from "convex/react";
+import { api } from "convex/_generated/api";
 import { PageContainer } from '@/components/shared/PageContainer';
 import { ChoreCard } from '@/components/shared/ChoreCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { choreTemplates } from '@/mocks/data';
+import { ChoreCardSkeleton } from '@/components/shared/skeletons';
 import { Plus, Search, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,8 +17,9 @@ export default function ChoresList() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('All');
   const [search, setSearch] = useState('');
+  const chores = useQuery(api.chores.list);
 
-  const filtered = choreTemplates.filter(c => {
+  const filtered = (chores ?? []).filter(c => {
     if (search && !c.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (activeTab === 'Required') return c.isRequired;
     if (activeTab === 'Optional') return !c.isRequired;
@@ -28,7 +31,7 @@ export default function ChoresList() {
   return (
     <PageContainer
       title="Chores"
-      subtitle={`${choreTemplates.length} chore templates`}
+      subtitle={`${(chores ?? []).length} chore templates`}
       action={
         <Button onClick={() => navigate('/app/chores/new')} size="sm">
           <Plus size={16} className="mr-1" /> New Chore
@@ -55,12 +58,16 @@ export default function ChoresList() {
         <Input placeholder="Search chores..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
       </div>
 
-      {filtered.length === 0 ? (
+      {chores === undefined ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => <ChoreCardSkeleton key={i} />)}
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyState icon={<ListChecks size={24} />} title="No chores found" description="Try adjusting your filters or create a new chore." />
       ) : (
         <div className="space-y-3">
           {filtered.map(chore => (
-            <ChoreCard key={chore.id} chore={chore} onClick={() => navigate(`/app/chores/${chore.id}`)} />
+            <ChoreCard key={chore._id} chore={{ id: chore._id, title: chore.title, description: chore.description, category: chore.category, recurrence: chore.recurrence, isRequired: chore.isRequired, approvalMode: chore.approvalMode, photoProofRequired: chore.photoProofRequired, baseTokens: chore.baseTokens, earlyCompletionBonus: chore.earlyCompletionBonus, earlyBonusValue: chore.earlyBonusValue, streakBonus: chore.streakBonus, streakBonusValue: chore.streakBonusValue, assignedChildIds: chore.assignedChildIds as unknown as string[], isActive: chore.isActive, dueTime: chore.dueTime }} onClick={() => navigate(`/app/chores/${chore._id}`)} />
           ))}
         </div>
       )}

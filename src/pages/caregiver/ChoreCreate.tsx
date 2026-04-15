@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from 'convex/_generated/api';
 import { PageContainer } from '@/components/shared/PageContainer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { children, choreCategories } from '@/mocks/data';
+import { choreCategories } from '@/mocks/data';
 import { TokenBadge } from '@/components/shared/TokenBadge';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
@@ -30,16 +32,16 @@ const schema = z.object({
   streakBonus: z.boolean(),
   streakBonusValue: z.number().min(0),
   dueTime: z.string(),
-  startDate: z.string(),
-  endDate: z.string().optional(),
-  missedBehavior: z.enum(['expire', 'overdue']),
-  reminderEnabled: z.boolean(),
+  assignedChildIds: z.array(z.string()),
 });
 
 type FormData = z.infer<typeof schema>;
 
 export default function ChoreCreate() {
   const navigate = useNavigate();
+  const children = useQuery(api.users.listChildren) ?? [];
+  const createChore = useMutation(api.chores.create);
+
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -53,18 +55,35 @@ export default function ChoreCreate() {
       streakBonus: false,
       streakBonusValue: 3,
       dueTime: '17:00',
-      startDate: new Date().toISOString().split('T')[0],
-      missedBehavior: 'overdue',
-      reminderEnabled: true,
+      assignedChildIds: [],
     },
   });
 
   const watchAll = watch();
 
-  const onSubmit = async () => {
-    await new Promise(r => setTimeout(r, 500));
-    toast.success('Chore created! 🎉');
-    navigate('/app/chores');
+  const onSubmit = async (data: FormData) => {
+    try {
+      await createChore({
+        title: data.title,
+        description: data.description ?? '',
+        category: data.category,
+        recurrence: data.recurrence,
+        isRequired: data.isRequired,
+        approvalMode: data.approvalMode,
+        photoProofRequired: data.photoProofRequired,
+        baseTokens: data.baseTokens,
+        earlyCompletionBonus: data.earlyCompletionBonus,
+        earlyBonusValue: data.earlyBonusValue,
+        streakBonus: data.streakBonus,
+        streakBonusValue: data.streakBonusValue,
+        assignedChildIds: data.assignedChildIds as unknown as never[],
+        dueTime: data.dueTime,
+      });
+      toast.success('Chore created! 🎉');
+      navigate('/app/chores');
+    } catch {
+      toast.error('Failed to create chore');
+    }
   };
 
   return (
@@ -109,11 +128,21 @@ export default function ChoreCreate() {
           <CardContent className="pt-0">
             <div className="space-y-2">
               {children.map(child => (
-                <label key={child.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer">
-                  <Checkbox />
+                <label key={child._id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer">
+                  <Checkbox
+                    checked={watchAll.assignedChildIds?.includes(child._id)}
+                    onCheckedChange={(checked) => {
+                      const current = watchAll.assignedChildIds || [];
+                      if (checked) {
+                        setValue('assignedChildIds', [...current, child._id]);
+                      } else {
+                        setValue('assignedChildIds', current.filter((id: string) => id !== child._id));
+                      }
+                    }}
+                  />
                   <span className="text-lg">{child.avatar}</span>
                   <span className="text-sm font-medium">{child.name}</span>
-                  <span className="text-xs text-muted-foreground">Age {child.age}</span>
+                  {child.age && <span className="text-xs text-muted-foreground">Age {child.age}</span>}
                 </label>
               ))}
             </div>
@@ -136,29 +165,9 @@ export default function ChoreCreate() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="dueTime">Due Time</Label>
-                <Input id="dueTime" type="time" {...register('dueTime')} className="mt-1" />
-              </div>
-              <div>
-                <Label htmlFor="startDate">Start Date</Label>
-                <Input id="startDate" type="date" {...register('startDate')} className="mt-1" />
-              </div>
-            </div>
             <div>
-              <Label htmlFor="endDate">End Date (optional)</Label>
-              <Input id="endDate" type="date" {...register('endDate')} className="mt-1" />
-            </div>
-            <div>
-              <Label>If Missed</Label>
-              <Select defaultValue="overdue" onValueChange={v => setValue('missedBehavior', v as FormData['missedBehavior'])}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="overdue">Mark as Overdue</SelectItem>
-                  <SelectItem value="expire">Expire</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="dueTime">Due Time</Label>
+              <Input id="dueTime" type="time" {...register('dueTime')} className="mt-1" />
             </div>
           </CardContent>
         </Card>
@@ -187,13 +196,6 @@ export default function ChoreCreate() {
                 <p className="text-xs text-muted-foreground">Child must upload a photo</p>
               </div>
               <Switch checked={watchAll.photoProofRequired} onCheckedChange={v => setValue('photoProofRequired', v)} />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Reminders</p>
-                <p className="text-xs text-muted-foreground">Send before due time</p>
-              </div>
-              <Switch checked={watchAll.reminderEnabled} onCheckedChange={v => setValue('reminderEnabled', v)} />
             </div>
           </CardContent>
         </Card>

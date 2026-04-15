@@ -3,6 +3,9 @@ import { useUser, useClerk } from '@clerk/react';
 import { Bell, Menu, X, LayoutDashboard, ListChecks, Gift, ClipboardCheck, BarChart3, Users, Settings, LogOut, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useQuery } from 'convex/react';
+import { api } from 'convex/_generated/api';
+import Setup from '@/pages/caregiver/Setup';
 
 const navItems = [
   { title: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
@@ -19,6 +22,18 @@ export function CaregiverLayout() {
   const { signOut } = useClerk();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const household = useQuery(api.households.getMyHousehold);
+
+  if (household === null) {
+    return <Setup />;
+  }
+  if (household === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   const currentTitle = navItems.find(item => location.pathname.startsWith(item.path))?.title || 'Dashboard';
 

@@ -1,24 +1,37 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from 'convex/_generated/api';
+import type { Id } from 'convex/_generated/dataModel';
 import { PageContainer } from '@/components/shared/PageContainer';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { TokenBadge } from '@/components/shared/TokenBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { choreTemplates, choreOccurrences, children } from '@/mocks/data';
 import { ArrowLeft, Edit, Copy, Archive, Clock, Camera, Repeat, Users } from 'lucide-react';
-import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 const recurrenceLabels = { once: 'One-time', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
 
 export default function ChoreDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const chore = choreTemplates.find(c => c.id === id);
+  const chore = useQuery(api.chores.get, id ? { choreId: id as Id<"chores"> } : "skip");
+  const childrenList = useQuery(api.users.listChildren) ?? [];
+  const setActive = useMutation(api.chores.setActive);
 
-  if (!chore) return <PageContainer title="Chore Not Found"><p>This chore doesn't exist.</p></PageContainer>;
+  if (!chore) return <PageContainer title="Loading..."><p>Loading...</p></PageContainer>;
 
-  const occurrences = choreOccurrences.filter(o => o.choreTemplateId === chore.id);
-  const assignedChildren = children.filter(c => chore.assignedChildIds.includes(c.id));
+  const assignedChildren = childrenList.filter(c => chore.assignedChildIds?.includes(c._id));
+
+  const handleArchive = async () => {
+    try {
+      await setActive({ choreId: chore._id, isActive: false });
+      toast.success('Chore archived');
+      navigate('/app/chores');
+    } catch {
+      toast.error('Failed to archive chore');
+    }
+  };
 
   return (
     <PageContainer
@@ -82,7 +95,7 @@ export default function ChoreDetail() {
           <CardContent className="pt-0">
             <div className="space-y-2">
               {assignedChildren.map(child => (
-                <div key={child.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                <div key={child._id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
                   <span className="text-xl">{child.avatar}</span>
                   <span className="text-sm font-medium">{child.name}</span>
                 </div>
@@ -91,28 +104,11 @@ export default function ChoreDetail() {
           </CardContent>
         </Card>
 
-        {/* Recent completions */}
+        {/* Recent completions - todo: wire to occurrences query */}
         <Card className="border">
           <CardHeader className="pb-3"><CardTitle className="text-base font-display">Recent Completions</CardTitle></CardHeader>
           <CardContent className="pt-0">
-            {occurrences.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No completions yet</p>
-            ) : (
-              <div className="space-y-2">
-                {occurrences.map(o => (
-                  <div key={o.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                    <div>
-                      <p className="text-sm font-medium">{o.childName}</p>
-                      <p className="text-xs text-muted-foreground">{format(new Date(o.dueDate), 'MMM d, h:mm a')}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={o.status} />
-                      {o.tokensEarned != null && <TokenBadge amount={o.tokensEarned} size="sm" />}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <p className="text-sm text-muted-foreground">Coming soon</p>
           </CardContent>
         </Card>
 
@@ -120,7 +116,7 @@ export default function ChoreDetail() {
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1"><Edit size={14} className="mr-1" /> Edit</Button>
           <Button variant="outline" className="flex-1"><Copy size={14} className="mr-1" /> Duplicate</Button>
-          <Button variant="outline" className="flex-1 text-destructive"><Archive size={14} className="mr-1" /> Archive</Button>
+          <Button variant="outline" className="flex-1 text-destructive" onClick={handleArchive}><Archive size={14} className="mr-1" /> Archive</Button>
         </div>
       </div>
     </PageContainer>

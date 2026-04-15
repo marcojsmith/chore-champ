@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from 'convex/_generated/api';
 import { PageContainer } from '@/components/shared/PageContainer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { children, rewardCategories } from '@/mocks/data';
+import { rewardCategories } from '@/mocks/data';
 import { toast } from 'sonner';
 import { ArrowLeft, ImagePlus } from 'lucide-react';
 
@@ -20,7 +22,9 @@ const schema = z.object({
   description: z.string().optional(),
   tokenCost: z.number().min(1, 'Must be at least 1'),
   category: z.string().min(1, 'Category required'),
+  imageEmoji: z.string().optional(),
   stockQuantity: z.number().optional(),
+  eligibleChildIds: z.array(z.string()),
   isActive: z.boolean(),
 });
 
@@ -28,15 +32,32 @@ type FormData = z.infer<typeof schema>;
 
 export default function RewardCreate() {
   const navigate = useNavigate();
+  const childrenList = useQuery(api.users.listChildren) ?? [];
+  const createReward = useMutation(api.rewards.create);
+
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { tokenCost: 20, isActive: true },
+    defaultValues: { tokenCost: 20, isActive: true, eligibleChildIds: [], imageEmoji: '🎁' },
   });
 
-  const onSubmit = async () => {
-    await new Promise(r => setTimeout(r, 500));
-    toast.success('Reward created! 🎁');
-    navigate('/app/rewards');
+  const watchAll = watch();
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      await createReward({
+        title: data.title,
+        description: data.description ?? '',
+        tokenCost: data.tokenCost,
+        category: data.category,
+        imageEmoji: data.imageEmoji,
+        stockQuantity: data.stockQuantity,
+        eligibleChildIds: data.eligibleChildIds as unknown as never[],
+      });
+      toast.success('Reward created! 🎁');
+      navigate('/app/rewards');
+    } catch {
+      toast.error('Failed to create reward');
+    }
   };
 
   return (
@@ -78,8 +99,24 @@ export default function RewardCreate() {
             </div>
             <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors">
               <ImagePlus size={24} className="mx-auto mb-2" />
-              <p className="text-sm">Upload reward image</p>
-              <p className="text-xs">Click to browse or drag and drop</p>
+              <p className="text-sm">Upload reward image (coming soon)</p>
+              <p className="text-xs">Or use emoji below</p>
+            </div>
+            <div>
+              <Label>Reward Emoji</Label>
+              <Select onValueChange={(v) => { if (v) setValue('imageEmoji', v); }} defaultValue={watchAll.imageEmoji}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select emoji" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="🎁">🎁 Gift</SelectItem>
+                  <SelectItem value="🍦">🍦 Ice Cream</SelectItem>
+                  <SelectItem value="🎮">🎮 Game Time</SelectItem>
+                  <SelectItem value="📱">📱 Screen Time</SelectItem>
+                  <SelectItem value="🎬">🎬 Movie</SelectItem>
+                  <SelectItem value="🍕">🍕 Pizza</SelectItem>
+                  <SelectItem value="🧸">🧸 Toy</SelectItem>
+                  <SelectItem value="⭐">⭐ Star</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -88,9 +125,19 @@ export default function RewardCreate() {
           <CardHeader className="pb-3"><CardTitle className="text-base font-display">Eligible Children</CardTitle></CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-2">
-              {children.map(child => (
-                <label key={child.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer">
-                  <Checkbox defaultChecked />
+              {childrenList.map(child => (
+                <label key={child._id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer">
+                  <Checkbox
+                    checked={watchAll.eligibleChildIds?.includes(child._id)}
+                    onCheckedChange={(checked) => {
+                      const current = watchAll.eligibleChildIds || [];
+                      if (checked) {
+                        setValue('eligibleChildIds', [...current, child._id]);
+                      } else {
+                        setValue('eligibleChildIds', current.filter((id: string) => id !== child._id));
+                      }
+                    }}
+                  />
                   <span className="text-lg">{child.avatar}</span>
                   <span className="text-sm font-medium">{child.name}</span>
                 </label>

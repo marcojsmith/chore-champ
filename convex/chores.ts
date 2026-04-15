@@ -1,7 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireCaregiver } from "./lib";
-import { Doc } from "./_generated/dataModel";
+import { requireCaregiver, requireUser } from "./lib";
+import type { Doc } from "./_generated/dataModel";
 
 const choreArgs = {
   title: v.string(),
@@ -39,6 +39,17 @@ export const get = query({
     const chore = await ctx.db.get("chores", args.choreId);
     if (!chore) return null;
     if (chore.householdId !== caregiver.householdId) return null;
+    return chore;
+  },
+});
+
+export const getForChild = query({
+  args: { choreId: v.id("chores") },
+  handler: async (ctx, args) => {
+    const user = await requireUser(ctx);
+    const chore = await ctx.db.get("chores", args.choreId);
+    if (!chore) return null;
+    if (!chore.assignedChildIds.includes(user._id)) return null;
     return chore;
   },
 });

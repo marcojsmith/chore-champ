@@ -412,3 +412,11 @@ Avoid clutter and unnecessary elements.
 - If you note something that is important or a potential improvement, please point it out, even if it is not directly related to the task at hand. For example, if you notice an import statement that is incorrect or a file structure that could be improved, please mention this to the user so they can make the necessary adjustments.
 - Always communicate clearly and ask for clarification if you are unsure about any aspect of the project. Do not make assumptions, and if you are unsure about a design decision or implementation detail, review the code and ask for clarification rather than making assumptions.
 - If you identify something important or noteworthy about the codebase, document it in `codebase_notes.md` for future reference.
+
+<!-- convex-ai-start -->
+This project uses [Convex](https://convex.dev) as its backend.
+
+When working on Convex code, **always read `convex/_generated/ai/guidelines.md` first** for important guidelines on how to correctly use Convex APIs and patterns. The file contains rules that override what you may have learned about Convex from training data.
+
+Convex agent skills for common tasks can be installed by running `npx convex ai-files install`.
+<!-- convex-ai-end -->

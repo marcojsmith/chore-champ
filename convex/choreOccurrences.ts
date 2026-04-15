@@ -1,6 +1,15 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireCaregiver, requireUser } from "./lib";
+import type { Doc } from "./_generated/dataModel";
+
+type ChoreOccurrenceEnriched = Omit<Doc<"choreOccurrences">, "householdId"> & {
+  choreTitle: string;
+  choreDescription: string;
+  baseTokens: number;
+  photoProofRequired: boolean;
+  approvalMode: "auto" | "manual";
+};
 
 const statusType = v.union(
   v.literal("scheduled"),
@@ -60,6 +69,42 @@ export const listForChild = query({
 
     const occurrences = await queryCtx.take(100);
     return occurrences;
+  },
+});
+
+export const listForChildEnriched = query({
+  args: { status: v.optional(statusType) },
+  handler: async (ctx, args): Promise<ChoreOccurrenceEnriched[]> => {
+    const user = await requireUser(ctx);
+    const childId = user._id;
+
+    let queryCtx;
+    if (args.status) {
+      queryCtx = ctx.db
+        .query("choreOccurrences")
+        .withIndex("by_childId_and_status", q => q.eq("childId", childId).eq("status", args.status!));
+    } else {
+      queryCtx = ctx.db
+        .query("choreOccurrences")
+        .withIndex("by_childId", q => q.eq("childId", childId));
+    }
+
+    const occurrences = await queryCtx.take(100);
+
+    const enriched: ChoreOccurrenceEnriched[] = [];
+    for (const occ of occurrences) {
+      const chore = await ctx.db.get(occ.choreId);
+      enriched.push({
+        ...occ,
+        choreTitle: chore?.title ?? "Unknown",
+        choreDescription: chore?.description ?? "",
+        baseTokens: chore?.baseTokens ?? 0,
+        photoProofRequired: chore?.photoProofRequired ?? false,
+        approvalMode: chore?.approvalMode ?? "manual",
+      });
+    }
+
+    return enriched;
   },
 });
 

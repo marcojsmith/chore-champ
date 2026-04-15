@@ -1,29 +1,34 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCurrentChild } from '@/hooks/useCurrentChild';
+import { useQuery } from "convex/react";
+import { api } from "convex/_generated/api";
 import { PageContainer } from '@/components/shared/PageContainer';
-import { RewardCard } from '@/components/shared/RewardCard';
+import { RewardCardSkeleton } from '@/components/shared/skeletons';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { rewards, rewardRequests } from '@/mocks/data';
 import { Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = ['All', 'Affordable', 'Requested'];
 
 export default function ChildRewards() {
-  const child = useCurrentChild();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('All');
 
-  const myRewards = rewards.filter(r => r.eligibleChildIds.includes(child.id) && r.isActive);
-  const myRequests = rewardRequests.filter(r => r.childId === child.id && r.status === 'pending');
+  const me = useQuery(api.users.getMe);
+  const childStats = useQuery(api.users.getChildStats, me ? { childId: me._id } : "skip");
+  const rewards = useQuery(api.rewards.listForChild);
+  const redemptions = useQuery(api.rewardRedemptions.listForChild);
+
+  const myRequests = redemptions?.filter(r => r.status === 'pending') ?? [];
   const requestedIds = new Set(myRequests.map(r => r.rewardId));
 
-  const filtered = myRewards.filter(r => {
-    if (activeTab === 'Affordable') return child.tokenBalance >= r.tokenCost;
-    if (activeTab === 'Requested') return requestedIds.has(r.id);
+  const filtered = rewards?.filter(r => {
+    if (activeTab === 'Affordable') return r.tokenCost <= (childStats?.tokenBalance ?? 0);
+    if (activeTab === 'Requested') return requestedIds.has(r._id);
     return true;
-  });
+  }) ?? [];
+
+  const isLoading = me === undefined || childStats === undefined || rewards === undefined || redemptions === undefined;
 
   return (
     <PageContainer title="Rewards">
@@ -47,7 +52,13 @@ export default function ChildRewards() {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-3">
+          <RewardCardSkeleton />
+          <RewardCardSkeleton />
+          <RewardCardSkeleton />
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Gift size={24} />}
           title="No rewards here"
@@ -56,12 +67,32 @@ export default function ChildRewards() {
       ) : (
         <div className="space-y-3">
           {filtered.map(r => (
-            <RewardCard
-              key={r.id}
-              reward={r}
-              childBalance={child.tokenBalance}
-              onClick={() => navigate(`/child/rewards/${r.id}`)}
-            />
+            <div
+              key={r._id}
+              className="rounded-xl border bg-card p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => navigate(`/child/rewards/${r._id}`)}
+            >
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                  {r.imageEmoji ? <span className="text-xl">{r.imageEmoji}</span> : <Gift size={20} className="text-accent" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{r.title}</p>
+                  <p className="text-xs text-muted-foreground">{r.category}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className={cn(
+                      'text-xs px-2 py-1 rounded-full font-medium',
+                      (childStats?.tokenBalance ?? 0) >= r.tokenCost ? 'bg-accent/10 text-accent' : 'bg-muted text-muted-foreground'
+                    )}>
+                      {r.tokenCost} tokens
+                    </span>
+                    {requestedIds.has(r._id) && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-warning/10 text-warning font-medium">Pending</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}

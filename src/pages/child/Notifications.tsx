@@ -1,22 +1,70 @@
-import { useState } from 'react';
-import { useCurrentChild } from '@/hooks/useCurrentChild';
+import { useQuery, useMutation } from "convex/react";
+import { api } from "convex/_generated/api";
 import { PageContainer } from '@/components/shared/PageContainer';
-import { NotificationItem } from '@/components/shared/NotificationItem';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
-import { notifications } from '@/mocks/data';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Bell, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import type { Id } from "convex/_generated/dataModel";
+
+type NotificationWithMeta = {
+  id: string;
+  title: string;
+  body: string;
+  read: boolean;
+  createdAt: string;
+  type: 'chore_completed' | 'chore_approved' | 'chore_rejected' | 'reward_requested' | 'reward_approved' | 'reward_rejected' | 'reminder';
+};
 
 export default function ChildNotifications() {
-  const child = useCurrentChild();
-  const [items, setItems] = useState(notifications.filter(n => n.userId === child.id));
+  const notifications = useQuery(api.notifications.listMine);
+  const markRead = useMutation(api.notifications.markRead);
+  const markAllRead = useMutation(api.notifications.markAllRead);
+
+  const items: NotificationWithMeta[] = notifications?.map(n => ({
+    id: n._id,
+    title: n.title,
+    body: n.body,
+    read: n.read,
+    createdAt: format(new Date(n._creationTime), 'MMM d, h:mm a'),
+    type: n.type,
+  })) ?? [];
+
   const unreadCount = items.filter(n => !n.read).length;
 
-  const markAllRead = () => {
-    setItems(prev => prev.map(n => ({ ...n, read: true })));
-    toast.success('All read!');
+  const handleMarkRead = async (id: string) => {
+    try {
+      await markRead({ notificationId: id as Id<"notifications"> });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to mark as read');
+    }
   };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllRead();
+      toast.success('All marked as read!');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to mark all as read');
+    }
+  };
+
+  if (notifications === undefined) {
+    return (
+      <PageContainer
+        title="Notifications"
+        subtitle="Loading..."
+      >
+        <div className="space-y-2">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer
@@ -24,7 +72,7 @@ export default function ChildNotifications() {
       subtitle={unreadCount > 0 ? `${unreadCount} unread` : undefined}
       action={
         unreadCount > 0
-          ? <Button variant="outline" size="sm" onClick={markAllRead}><CheckCheck size={14} className="mr-1" /> Read all</Button>
+          ? <Button variant="outline" size="sm" onClick={handleMarkAllRead}><CheckCheck size={14} className="mr-1" /> Read all</Button>
           : undefined
       }
     >
@@ -32,7 +80,22 @@ export default function ChildNotifications() {
         <EmptyState icon={<Bell size={24} />} title="No notifications" description="You're all caught up!" />
       ) : (
         <div className="space-y-1">
-          {items.map(n => <NotificationItem key={n.id} notification={n} />)}
+          {items.map(n => (
+            <div
+              key={n.id}
+              className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+              onClick={() => !n.read && handleMarkRead(n.id)}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`h-2 w-2 rounded-full mt-2 shrink-0 ${n.read ? 'bg-transparent' : 'bg-primary'}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">{n.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{n.body}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{n.createdAt}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </PageContainer>

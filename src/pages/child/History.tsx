@@ -1,35 +1,74 @@
-import { useCurrentChild } from '@/hooks/useCurrentChild';
+import { useQuery } from "convex/react";
+import { api } from "convex/_generated/api";
 import { PageContainer } from '@/components/shared/PageContainer';
-import { StatusBadge } from '@/components/shared/StatusBadge';
 import { TokenBadge } from '@/components/shared/TokenBadge';
-import { choreOccurrences, rewardRequests } from '@/mocks/data';
+import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 
 export default function ChildHistory() {
-  const child = useCurrentChild();
+  const me = useQuery(api.users.getMe);
+  const childStats = useQuery(api.users.getChildStats, me ? { childId: me._id } : "skip");
+  const completedChores = useQuery(api.choreOccurrences.listForChild, { status: "approved" });
+  const redemptions = useQuery(api.rewardRedemptions.listForChild);
 
-  const chores = choreOccurrences.filter(
-    o => o.childId === child.id && ['completed', 'approved'].includes(o.status)
-  );
-  const rewards = rewardRequests.filter(r => r.childId === child.id);
+  const isLoading = me === undefined || childStats === undefined || completedChores === undefined || redemptions === undefined;
+
+  if (isLoading) {
+    return (
+      <PageContainer title="History">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="h-16 rounded-lg" />
+            <Skeleton className="h-16 rounded-lg" />
+            <Skeleton className="h-16 rounded-lg" />
+            <Skeleton className="h-16 rounded-lg" />
+          </div>
+          <Skeleton className="h-6 w-40 mt-6" />
+          <div className="space-y-2">
+            <Skeleton className="h-16 rounded-lg" />
+            <Skeleton className="h-16 rounded-lg" />
+          </div>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer title="History">
       <div className="space-y-4">
-        <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-3 rounded-lg bg-card border text-center">
+            <p className="text-xs text-muted-foreground uppercase">Total Earned</p>
+            <p className="text-lg font-bold text-success">{childStats?.totalEarned ?? 0}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-card border text-center">
+            <p className="text-xs text-muted-foreground uppercase">Total Spent</p>
+            <p className="text-lg font-bold text-destructive">{childStats?.totalSpent ?? 0}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-card border text-center">
+            <p className="text-xs text-muted-foreground uppercase">Chores Done</p>
+            <p className="text-lg font-bold text-primary">{completedChores?.length ?? 0}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-card border text-center">
+            <p className="text-xs text-muted-foreground uppercase">Rewards Claimed</p>
+            <p className="text-lg font-bold text-accent">{redemptions?.length ?? 0}</p>
+          </div>
+        </div>
+
+        <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mt-6">
           Completed Chores
         </h2>
-        {chores.length === 0
+        {(!completedChores || completedChores.length === 0)
           ? <p className="text-sm text-muted-foreground">No completed chores yet</p>
-          : chores.map(o => (
-            <div key={o.id} className="flex items-center justify-between p-3 rounded-lg bg-card border">
+          : completedChores.map(o => (
+            <div key={o._id} className="flex items-center justify-between p-3 rounded-lg bg-card border">
               <div>
-                <p className="text-sm font-medium">{o.choreTitle}</p>
-                <p className="text-xs text-muted-foreground">{format(new Date(o.dueDate), 'MMM d')}</p>
+                <p className="text-sm font-medium">Chore #{String(o.choreId).slice(-6)}</p>
+                <p className="text-xs text-muted-foreground">{format(new Date(o.dueDate), 'MMM d, yyyy')}</p>
               </div>
               <div className="flex items-center gap-2">
                 {o.tokensEarned != null && <TokenBadge amount={o.tokensEarned} size="sm" />}
-                <StatusBadge status={o.status} />
+                <span className="text-xs px-2 py-1 rounded-full bg-success/10 text-success font-medium">Approved</span>
               </div>
             </div>
           ))
@@ -38,17 +77,21 @@ export default function ChildHistory() {
         <h2 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mt-6">
           Reward Requests
         </h2>
-        {rewards.length === 0
+        {(!redemptions || redemptions.length === 0)
           ? <p className="text-sm text-muted-foreground">No reward requests yet</p>
-          : rewards.map(r => (
-            <div key={r.id} className="flex items-center justify-between p-3 rounded-lg bg-card border">
+          : redemptions.map(r => (
+            <div key={r._id} className="flex items-center justify-between p-3 rounded-lg bg-card border">
               <div>
-                <p className="text-sm font-medium">{r.rewardTitle}</p>
-                <p className="text-xs text-muted-foreground">{format(new Date(r.requestedAt), 'MMM d')}</p>
+                <p className="text-sm font-medium">Reward #{String(r.rewardId).slice(-6)}</p>
+                <p className="text-xs text-muted-foreground">{format(new Date(r._creationTime), 'MMM d, yyyy')}</p>
               </div>
               <div className="flex items-center gap-2">
                 <TokenBadge amount={r.tokenCost} size="sm" />
-                <StatusBadge status={r.status} />
+                <span className={r.status === 'approved' ? 'text-xs px-2 py-1 rounded-full bg-success/10 text-success font-medium' :
+                  r.status === 'rejected' ? 'text-xs px-2 py-1 rounded-full bg-destructive/10 text-destructive font-medium' :
+                  'text-xs px-2 py-1 rounded-full bg-warning/10 text-warning font-medium'}>
+                  {r.status}
+                </span>
               </div>
             </div>
           ))
