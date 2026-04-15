@@ -2,7 +2,7 @@ import { Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
-import { AuthGuard } from '@/components/shared/AuthGuard';
+import { AuthGuard, RoleGuard } from '@/components/shared/AuthGuard';
 
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { CaregiverLayout } from '@/components/layout/CaregiverLayout';
@@ -49,7 +49,7 @@ const App = () => (
       </Route>
 
       {/* Caregiver */}
-      <Route path="/app" element={<AuthGuard><ErrorBoundary><CaregiverLayout /></ErrorBoundary></AuthGuard>}>
+      <Route path="/app" element={<AuthGuard><RoleGuard requiredRole="caregiver" redirectTo="/child/dashboard"><ErrorBoundary><CaregiverLayout /></ErrorBoundary></RoleGuard></AuthGuard>}>
         <Route index element={<Navigate to="/app/dashboard" replace />} />
         <Route path="dashboard" element={<CaregiverDashboard />} />
         <Route path="chores" element={<ChoresList />} />
@@ -67,7 +67,7 @@ const App = () => (
       </Route>
 
       {/* Child */}
-      <Route path="/child" element={<AuthGuard><ErrorBoundary><ChildLayout /></ErrorBoundary></AuthGuard>}>
+      <Route path="/child" element={<AuthGuard><RoleGuard requiredRole="child" redirectTo="/app/dashboard"><ErrorBoundary><ChildLayout /></ErrorBoundary></RoleGuard></AuthGuard>}>
         <Route index element={<Navigate to="/child/dashboard" replace />} />
         <Route path="dashboard" element={<ChildDashboard />} />
         <Route path="chores" element={<MyChores />} />
