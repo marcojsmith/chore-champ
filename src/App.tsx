@@ -22,6 +22,7 @@ import RewardDetail from '@/pages/caregiver/RewardDetail';
 import Approvals from '@/pages/caregiver/Approvals';
 import Reports from '@/pages/caregiver/Reports';
 import ChildrenList from '@/pages/caregiver/ChildrenList';
+import ChildCreate from '@/pages/caregiver/ChildCreate';
 import ChildDetailPage from '@/pages/caregiver/ChildDetail';
 import CaregiverNotifications from '@/pages/caregiver/Notifications';
 import CaregiverSettings from '@/pages/caregiver/Settings';
@@ -61,6 +62,7 @@ const App = () => (
         <Route path="approvals" element={<Approvals />} />
         <Route path="reports" element={<Reports />} />
         <Route path="children" element={<ChildrenList />} />
+        <Route path="children/new" element={<ChildCreate />} />
         <Route path="children/:id" element={<ChildDetailPage />} />
         <Route path="notifications" element={<CaregiverNotifications />} />
         <Route path="settings" element={<CaregiverSettings />} />
