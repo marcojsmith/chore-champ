@@ -79,12 +79,38 @@ export const generateDailyOccurrences = internalMutation({
   },
 });
 
+export const markOverdueOccurrences = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+
+    const candidates = await ctx.db
+      .query("choreOccurrences")
+      .withIndex("by_dueDate", q => q.lt("dueDate", now))
+      .take(200);
+    const overdueOccurrences = candidates.filter(o => o.status === "due");
+
+    for (const occ of overdueOccurrences) {
+      await ctx.db.patch(occ._id, { status: "overdue" });
+    }
+
+    return { markedCount: overdueOccurrences.length };
+  },
+});
+
 const crons = cronJobs();
 
 crons.cron(
   "generate daily chore occurrences",
   "0 1 * * *",
   internal.crons.generateDailyOccurrences,
+  {}
+);
+
+crons.cron(
+  "mark overdue occurrences",
+  "0 * * * *",
+  internal.crons.markOverdueOccurrences,
   {}
 );
 
