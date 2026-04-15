@@ -148,7 +148,7 @@ export default function ChoreDetail() {
 
         {/* Actions */}
         <div className="flex gap-2">
-          <Button variant="outline" className="flex-1"><Edit size={14} className="mr-1" /> Edit</Button>
+          <Button variant="outline" className="flex-1" onClick={() => navigate(`/app/chores/${id}/edit`)}><Edit size={14} className="mr-1" /> Edit</Button>
           <Button variant="outline" className="flex-1"><Copy size={14} className="mr-1" /> Duplicate</Button>
           <Button variant="outline" className="flex-1 text-destructive" onClick={handleArchive}><Archive size={14} className="mr-1" /> Archive</Button>
         </div>

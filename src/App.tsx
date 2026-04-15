@@ -15,9 +15,11 @@ import SignUp from '@/pages/public/SignUp';
 import CaregiverDashboard from '@/pages/caregiver/Dashboard';
 import ChoresList from '@/pages/caregiver/ChoresList';
 import ChoreCreate from '@/pages/caregiver/ChoreCreate';
+import ChoreEdit from '@/pages/caregiver/ChoreEdit';
 import ChoreDetail from '@/pages/caregiver/ChoreDetail';
 import RewardsList from '@/pages/caregiver/RewardsList';
 import RewardCreate from '@/pages/caregiver/RewardCreate';
+import RewardEdit from '@/pages/caregiver/RewardEdit';
 import RewardDetail from '@/pages/caregiver/RewardDetail';
 import Approvals from '@/pages/caregiver/Approvals';
 import Reports from '@/pages/caregiver/Reports';
@@ -55,9 +57,11 @@ const App = () => (
         <Route path="dashboard" element={<CaregiverDashboard />} />
         <Route path="chores" element={<ChoresList />} />
         <Route path="chores/new" element={<ChoreCreate />} />
+        <Route path="chores/:id/edit" element={<ChoreEdit />} />
         <Route path="chores/:id" element={<ChoreDetail />} />
         <Route path="rewards" element={<RewardsList />} />
         <Route path="rewards/new" element={<RewardCreate />} />
+        <Route path="rewards/:id/edit" element={<RewardEdit />} />
         <Route path="rewards/:id" element={<RewardDetail />} />
         <Route path="approvals" element={<Approvals />} />
         <Route path="reports" element={<Reports />} />
