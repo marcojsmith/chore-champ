@@ -34,26 +34,16 @@ This project runs on Bun. Use `bun run <command>` to run scripts defined in `pac
 
 # General
 
-You are a senior full-stack developer.
-Your purpose is to assist the user in developing a digital application. You will provide guidance on project structure, coding best practices, and integration of external models and tools. You will also help ensure that the project adheres to the defined rules and guidelines, and that all code is well-documented and maintainable.
+You are a senior full-stack developer. Your purpose is to assist the user in developing a digital application according to the project's defined purpose, features, and philosophy.
 
-Build a web application with real-time capabilities, user authentication, and a responsive UI.
+**Always start by reading `docs/brief.md` to understand:**
+- The application's purpose, target audience, and key features
+- The tech stack and core functionality
+- MVP priorities and design philosophy
 
-Very important documentation can be found in the following folders and files:
-
-- Brief.md (Defines the application's purpose, target audience, and key features. This document serves as a reference for understanding the overall goals and objectives of the project, and should be consulted regularly to ensure that all development efforts are aligned with the project's vision.)
-- Checklist.md (Defines what needs to be implemented and what has been implemented. This document serves as a reference for tracking the progress of the project and ensuring that all necessary features and components are developed and integrated properly.)
-
-Determine the best course of action for the user based on the current state of the project and the defined rules and guidelines. Provide clear and concise instructions, code snippets, and explanations to help the user achieve their goals effectively. Always ensure that your suggestions align with the project's objectives and adhere to best practices in software development.
-
-# Project Overview
-
-This project is focused on developing a digital application with real-time capabilities, user authentication, and a responsive user interface.
-
-- Our goal is to develop a fully functional production-ready application that can be deployed and used by real users. This means that we need to ensure that the application is functional, secure, scalable, and maintainable.
-- We must deliver a high-quality codebase that adheres to best practices and coding standards, and that is well-documented to facilitate future development and maintenance.
-- We must architect the application in a way that allows for easy integration of new features and improvements in the future, ensure type safety across the codebase, and maintain a consistent design language throughout the application.
-- Focus on efficient bandwidth usage and performance optimization to ensure a smooth user experience, especially for users with limited internet connectivity.
+**Consult `docs/checklist.md` to track:**
+- What needs to be implemented
+- Current build progress
 
 # Rules & Guidelines
 
@@ -67,34 +57,39 @@ This project is focused on developing a digital application with real-time capab
 
 ## Folder Structure
 
-- `convex/`: Backend logic, database schema, and server-side functions using Convex.
+- `convex/`: Backend logic, database schema, queries, mutations, and scheduled functions.
 - `src/`: Frontend React application source code.
   - `assets/`: Static assets like images, fonts, and styles.
   - `components/`: Reusable UI components (using shadcn/ui).
   - `contexts/`: React context providers for global state.
   - `hooks/`: Custom React hooks for state and logic.
-  - `lib/`: Utility functions and shared application logic.
+  - `lib/`: Utilities (voice parsing, reward logic, types).
   - `pages/`: Application views and routing.
-  - `test/`: Frontend tests (Vitest, MCP).
+    - `caregiver/`: Parent/admin pages
+    - `child/`: Child-facing pages
+  - `test/`: Frontend tests (Vitest).
   - `types/`: TypeScript type definitions.
 - `conductor/`: Project management documentation, guidelines, and feature tracks.
-- `.gemini/`: Gemini CLI-specific configurations, rules, and specialized skills.
+- `docs/`: All documentation (brief, checklist, research).
 
-## Tech stack
+## Tech Stack
 
-**Frontend:** React (Vite), TypeScript.
+**Frontend:** React (Vite), TypeScript, Tailwind CSS 4, shadcn/ui.
 
-**Backend/Database:** Convex (Prepaid electricity consumption and purchase tracking).
+**Backend:** Convex (real-time BaaS database, queries, mutations, scheduled functions).
 
-- Important files to consider:
-  - [#TODO] still to be updated.
+**Auth:** Clerk (multi-tenant with household-based access control).
 
-**Authentication:** Clerk (for user authentication and management).
+- Clerk authentication configured in `convex/auth.config.ts`.
+- Integration with frontend via Clerk provider in `src/main.tsx` and `AuthContext`.
 
-- Important to note, the Clerk logic is primarily configured in `convex/auth.config.js`. This ensures secure access to the application using Clerk's multi-tenant authentication.
-- Integration with the frontend is handled via the Clerk provider in `src/main.tsx` and the `AuthContext`.
+**AI Integration:** OpenRouter (voice-to-chore parsing + smart reward suggestions).
 
-**Testing:** Chrome DevTools MCP (E2E/UI), Vitest.
+**Deployment:** Vercel (via GitHub).
+
+**Forms:** React Hook Form + Zod.
+
+**Charts:** Recharts.
 
 ## Operational Rules
 
@@ -356,10 +351,11 @@ Avoid clutter and unnecessary elements.
 
 **Important files to consider:**
 
-- `Brief.md`: Contains the project brief and overall objectives.
-- `Checklist.md`: Contains the checklist for commits and PRs.
-- `README.md`: Contains the project overview, setup instructions, and general information about the project.
-- `codebase_notes.md`: Used for documenting important information and ideas related to the codebase
+- `docs/brief.md`: Contains the project's purpose, target audience, features, tech stack, and design philosophy.
+- `docs/checklist.md`: Contains the implementation checklist tracking progress.
+- `docs/kids-chore-app-research.md`: Research on competitor apps, UX best practices, and market analysis.
+- `README.md`: Contains the project overview, setup instructions, and general information.
+- `codebase_notes.md`: Used for documenting important information and ideas related to the codebase.
 
 **When to update documentation:**
 
@@ -414,9 +410,11 @@ Avoid clutter and unnecessary elements.
 - If you identify something important or noteworthy about the codebase, document it in `codebase_notes.md` for future reference.
 
 <!-- convex-ai-start -->
+
 This project uses [Convex](https://convex.dev) as its backend.
 
 When working on Convex code, **always read `convex/_generated/ai/guidelines.md` first** for important guidelines on how to correctly use Convex APIs and patterns. The file contains rules that override what you may have learned about Convex from training data.
 
 Convex agent skills for common tasks can be installed by running `npx convex ai-files install`.
+
 <!-- convex-ai-end -->

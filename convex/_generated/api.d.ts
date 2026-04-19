@@ -16,6 +16,7 @@ import type * as lib from "../lib.js";
 import type * as notifications from "../notifications.js";
 import type * as rewardRedemptions from "../rewardRedemptions.js";
 import type * as rewards from "../rewards.js";
+import type * as tokenLedger from "../tokenLedger.js";
 import type * as users from "../users.js";
 
 import type {
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   rewardRedemptions: typeof rewardRedemptions;
   rewards: typeof rewards;
+  tokenLedger: typeof tokenLedger;
   users: typeof users;
 }>;
 
