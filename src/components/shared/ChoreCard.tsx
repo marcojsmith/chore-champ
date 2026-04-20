@@ -39,9 +39,8 @@ export function ChoreCard({ chore, occurrence, compact, onClick }: ChoreCardProp
 
   return (
     <Card
-      className={cn('rounded-xl border card-hover cursor-pointer', !chore.isActive && 'opacity-60')}
+      className={cn('rounded-xl border card-hover cursor-pointer shadow-sm', !chore.isActive && 'opacity-60')}
       onClick={onClick}
-      style={{ boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.06)' }}
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">

@@ -60,6 +60,39 @@ async function updateStreak(ctx: MutationCtx, childId: Id<"users">) {
       longestStreak: Math.max(stats.longestStreak, streak),
       completionRate,
     });
+
+    const milestoneMap: Record<number, number> = { 3: 5, 7: 15, 14: 30, 30: 75 };
+    if (milestoneMap[streak]) {
+      const child = await ctx.db.get(childId);
+      if (child) {
+        const milestonesAwarded = stats.milestonesAwarded ?? [];
+        if (!milestonesAwarded.includes(streak)) {
+          const bonusTokens = milestoneMap[streak];
+          await ctx.db.patch(stats._id, {
+            tokenBalance: stats.tokenBalance + bonusTokens,
+            totalEarned: stats.totalEarned + bonusTokens,
+            milestonesAwarded: [...milestonesAwarded, streak],
+          });
+
+          await ctx.db.insert("tokenLedger", {
+            householdId: child.householdId,
+            childId,
+            amount: bonusTokens,
+            type: "bonus",
+            note: `streak_milestone_${streak}`,
+          });
+
+          await ctx.db.insert("notifications", {
+            householdId: child.householdId,
+            userId: childId,
+            type: "reminder",
+            title: "Streak Milestone! 🔥",
+            body: `${streak}-day streak! You earned ${bonusTokens} bonus tokens!`,
+            read: false,
+          });
+        }
+      }
+    }
   }
 }
 

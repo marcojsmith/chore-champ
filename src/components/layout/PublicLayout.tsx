@@ -1,4 +1,5 @@
 import { Outlet, Link } from 'react-router-dom';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 export function PublicLayout() {
   return (
@@ -12,6 +13,7 @@ export function PublicLayout() {
             <span className="font-display font-bold text-xl tracking-tight">ChoreChamp</span>
           </Link>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Link to="/sign-in">
               <button className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted">
                 Sign In
@@ -25,7 +27,7 @@ export function PublicLayout() {
           </div>
         </div>
       </header>
-      <main className="flex-1">
+      <main className="flex-1 flex flex-col">
         <Outlet />
       </main>
       <footer className="border-t py-8 bg-card/50">

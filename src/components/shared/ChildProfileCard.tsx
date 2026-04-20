@@ -20,9 +20,8 @@ export function ChildProfileCard({ child, stats, onClick }: ChildProfileCardProp
   return (
     <div
       className={cn(
-        'bg-card border rounded-lg p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:border-primary/20',
+        'bg-card border rounded-lg p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:border-primary/20 shadow-sm',
       )}
-      style={{ boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.07)' }}
       onClick={onClick}
     >
       <div className="flex items-center gap-3 mb-3">

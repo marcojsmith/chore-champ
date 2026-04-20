@@ -1,14 +1,16 @@
 import { useQuery, useMutation } from "convex/react";
+import { useNavigate } from "react-router-dom";
 import { api } from "convex/_generated/api";
 import { PageContainer } from '@/components/shared/PageContainer';
 import { NotificationItem } from '@/components/shared/NotificationItem';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
 import { type Notification } from '@/mocks/data';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function CaregiverNotifications() {
+  const navigate = useNavigate();
   const notifications = useQuery(api.notifications.listMine);
   const markAllReadMutation = useMutation(api.notifications.markAllRead);
 
@@ -36,11 +38,16 @@ export default function CaregiverNotifications() {
       title="Notifications"
       subtitle={unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
       action={
-        unreadCount > 0 ? (
-          <Button variant="outline" size="sm" onClick={markAllRead}>
-            <CheckCheck size={14} className="mr-1" /> Mark all read
-          </Button>
-        ) : undefined
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <Button variant="outline" size="sm" onClick={markAllRead}>
+              <CheckCheck size={14} className="mr-1" /> Mark all read
+            </Button>
+          )}
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-muted transition-colors" title="Close">
+            <X size={18} />
+          </button>
+        </div>
       }
     >
       {items.length === 0 ? (

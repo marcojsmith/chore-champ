@@ -116,3 +116,49 @@ export const setActive = mutation({
     return null;
   },
 });
+
+type SmartSuggestionResult = {
+  affordable: Doc<"rewards">[];
+  nearMiss: Array<Doc<"rewards"> & { tokensNeeded: number }>;
+  tokenBalance: number;
+};
+
+export const getSmartSuggestions = query({
+  args: {},
+  handler: async (ctx): Promise<SmartSuggestionResult> => {
+    const user = await requireUser(ctx);
+
+    const stats = await ctx.db
+      .query("childStats")
+      .withIndex("by_childId", q => q.eq("childId", user._id))
+      .unique();
+
+    const tokenBalance = stats?.tokenBalance ?? 0;
+
+    const rewards = await ctx.db
+      .query("rewards")
+      .withIndex("by_householdId_and_isActive", q =>
+        q.eq("householdId", user.householdId).eq("isActive", true)
+      )
+      .take(100);
+
+    const filtered = rewards.filter(r =>
+      r.eligibleChildIds.length === 0 || r.eligibleChildIds.includes(user._id)
+    );
+
+    filtered.sort((a, b) => a.tokenCost - b.tokenCost);
+
+    const affordable: Doc<"rewards">[] = [];
+    const nearMiss: Array<Doc<"rewards"> & { tokensNeeded: number }> = [];
+
+    for (const r of filtered) {
+      if (r.tokenCost <= tokenBalance && affordable.length < 3) {
+        affordable.push(r);
+      } else if (r.tokenCost > tokenBalance && r.tokenCost <= tokenBalance + 100 && nearMiss.length < 3) {
+        nearMiss.push({ ...r, tokensNeeded: r.tokenCost - tokenBalance });
+      }
+    }
+
+    return { affordable, nearMiss, tokenBalance };
+  },
+});

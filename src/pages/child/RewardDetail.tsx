@@ -9,10 +9,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Id } from "convex/_generated/dataModel";
+import { useIsOnline } from '@/components/shared/OfflineBanner';
 
 export default function ChildRewardDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const isOnline = useIsOnline();
 
   const me = useQuery(api.users.getMe);
   const childStats = useQuery(api.users.getChildStats, me ? { childId: me._id } : "skip");
@@ -119,15 +121,20 @@ export default function ChildRewardDetail() {
             </CardContent>
           </Card>
         ) : (
-          <Button
-            className="w-full h-12 text-base font-semibold"
-            disabled={!canAfford}
-            onClick={handleRedeem}
-          >
-            {canAfford
-              ? 'Request Reward'
-              : `Need ${reward.tokenCost - (childStats?.tokenBalance ?? 0)} more tokens`}
-          </Button>
+          <>
+            <Button
+              className="w-full h-12 text-base font-semibold"
+              disabled={!canAfford || !isOnline}
+              onClick={handleRedeem}
+            >
+              {canAfford
+                ? 'Request Reward'
+                : `Need ${reward.tokenCost - (childStats?.tokenBalance ?? 0)} more tokens`}
+            </Button>
+            {!isOnline && (
+              <p className="text-xs text-muted-foreground text-center mt-2">You're offline — connect to submit</p>
+            )}
+          </>
         )}
       </div>
     </PageContainer>

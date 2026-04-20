@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChoreCardSkeleton } from '@/components/shared/skeletons';
-import { Plus, Search, ListChecks } from 'lucide-react';
+import { Plus, Search, ListChecks, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = ['All', 'Required', 'Optional', 'Active', 'Archived'];
@@ -33,9 +33,14 @@ export default function ChoresList() {
       title="Chores"
       subtitle={`${(chores ?? []).length} chore templates`}
       action={
-        <Button onClick={() => navigate('/app/chores/new')} size="sm">
-          <Plus size={16} className="mr-1" /> New Chore
-        </Button>
+        <>
+          <Button variant="outline" size="sm" onClick={() => navigate('/app/chores/voice')}>
+            <Mic size={16} className="mr-1.5" /> Voice
+          </Button>
+          <Button onClick={() => navigate('/app/chores/new')} size="sm">
+            <Plus size={16} className="mr-1" /> New Chore
+          </Button>
+        </>
       }
     >
       <div className="flex gap-1 overflow-x-auto pb-2 mb-4 -mx-1 px-1">

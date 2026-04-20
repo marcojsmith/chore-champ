@@ -1,10 +1,11 @@
 import { useQuery, useMutation } from "convex/react";
+import { useNavigate } from "react-router-dom";
 import { api } from "convex/_generated/api";
 import { PageContainer } from '@/components/shared/PageContainer';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import type { Id } from "convex/_generated/dataModel";
@@ -19,6 +20,7 @@ type NotificationWithMeta = {
 };
 
 export default function ChildNotifications() {
+  const navigate = useNavigate();
   const notifications = useQuery(api.notifications.listMine);
   const markRead = useMutation(api.notifications.markRead);
   const markAllRead = useMutation(api.notifications.markAllRead);
@@ -56,6 +58,11 @@ export default function ChildNotifications() {
       <PageContainer
         title="Notifications"
         subtitle="Loading..."
+        action={
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-muted transition-colors" title="Close">
+            <X size={18} />
+          </button>
+        }
       >
         <div className="space-y-2">
           <Skeleton className="h-20 w-full" />
@@ -71,9 +78,14 @@ export default function ChildNotifications() {
       title="Notifications"
       subtitle={unreadCount > 0 ? `${unreadCount} unread` : undefined}
       action={
-        unreadCount > 0
-          ? <Button variant="outline" size="sm" onClick={handleMarkAllRead}><CheckCheck size={14} className="mr-1" /> Read all</Button>
-          : undefined
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <Button variant="outline" size="sm" onClick={handleMarkAllRead}><CheckCheck size={14} className="mr-1" /> Read all</Button>
+          )}
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-muted transition-colors" title="Close">
+            <X size={18} />
+          </button>
+        </div>
       }
     >
       {items.length === 0 ? (

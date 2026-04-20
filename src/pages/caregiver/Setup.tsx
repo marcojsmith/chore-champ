@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from 'convex/_generated/api';
 
 export default function Setup() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const createHousehold = useMutation(api.households.create);
-  const [name, setName] = useState('');
+  const [name, setName] = useState(searchParams.get('name') ?? '');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -14,6 +17,7 @@ export default function Setup() {
     setLoading(true);
     try {
       await createHousehold({ name: name.trim() });
+      navigate('/app/dashboard');
     } catch {
       toast.error('Failed to create household');
       setLoading(false);

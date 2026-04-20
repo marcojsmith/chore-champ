@@ -6,7 +6,7 @@ import { NotificationItem } from '@/components/shared/NotificationItem';
 import { TokenBadge } from '@/components/shared/TokenBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MetricBarSkeleton } from '@/components/shared/skeletons';
-import { type Notification } from '@/mocks/data';
+
 import { ListChecks, CheckCircle2, AlertTriangle, ClipboardCheck, Gift, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
@@ -14,18 +14,14 @@ import { cn } from '@/lib/utils';
 
 export default function CaregiverDashboard() {
   const navigate = useNavigate();
-  const dashboardData = useQuery(api.choreOccurrences.getDashboardMetrics);
-  const children = useQuery(api.users.listChildren);
-  const notifications = useQuery(api.notifications.listMine);
-  const childStatsMap = useQuery(api.users.getAllChildStats);
-  const reportsData = useQuery(api.choreOccurrences.getReportsData, {});
+  const dashboard = useQuery(api.dashboard.getData);
 
-  const weeklyCompletion = reportsData?.weeklyCompletion.map(d => ({ label: d.label, value: d.completed, value2: d.total })) ?? [];
-  const monthlyTokens = reportsData?.weeklyTokens.map(d => ({ label: d.label, value: d.value })) ?? [];
+  const weeklyCompletion = dashboard?.weeklyCompletion.map(d => ({ label: d.label, value: d.completed, value2: d.total })) ?? [];
+  const monthlyTokens = dashboard?.weeklyTokens.map(d => ({ label: d.label, value: d.value })) ?? [];
 
-  const recentActivity = notifications?.slice(0, 5) ?? [];
+  const recentActivity = dashboard?.recentActivity ?? [];
 
-  const metricsValues = dashboardData ?? { choresDue: 0, choresCompleted: 0, overdueChores: 0, pendingApprovals: 0, pendingRewardRequests: 0 };
+  const metricsValues = dashboard?.metrics ?? { choresDue: 0, choresCompleted: 0, overdueChores: 0, pendingApprovals: 0, pendingRewardRequests: 0 };
   const metricsWithValues = [
     { title: 'Due Today',       value: metricsValues.choresDue,          icon: <ListChecks size={16} />,    color: 'text-primary' },
     { title: 'Completed',       value: metricsValues.choresCompleted,     icon: <CheckCircle2 size={16} />,  color: 'text-success' },
@@ -38,7 +34,7 @@ export default function CaregiverDashboard() {
     <PageContainer title="Dashboard" subtitle="Welcome back! Here's what's happening today.">
       {/* Inline stats bar — single surface, no individual cards */}
       <div className="bg-card border rounded-lg overflow-hidden mb-6 card-base animate-fade-in-up relative">
-        {dashboardData === undefined ? (
+        {dashboard === undefined ? (
           <MetricBarSkeleton />
         ) : (
           <div className="flex overflow-x-auto snap-x divide-x divide-border scrollbar-none">
@@ -64,13 +60,11 @@ export default function CaregiverDashboard() {
           <div className="animate-fade-in-up" style={{ animationDelay: '80ms' }}>
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Children</h2>
             <div className="grid sm:grid-cols-2 gap-3">
-              {(children ?? []).map(child => {
-                const stats = childStatsMap?.[child._id];
+              {(dashboard?.children ?? []).map(child => {
                 return (
                   <ChildProfileCard 
                     key={child._id} 
-                    child={{ id: child._id, name: child.name, age: child.age ?? 0, avatar: child.avatar, currentStreak: 0, longestStreak: 0, completionRate: stats?.completionRate ?? 0 }} 
-                    stats={stats} 
+                    child={{ id: child._id, name: child.name, age: child.age ?? 0, avatar: child.avatar, currentStreak: child.currentStreak, longestStreak: child.currentStreak, completionRate: child.completionRate }} 
                     onClick={() => navigate(`/app/children/${child._id}`)} 
                   />
                 );
@@ -122,15 +116,14 @@ export default function CaregiverDashboard() {
             <CardTitle className="font-display text-sm">Token Balances</CardTitle>
           </CardHeader>
           <CardContent className="pt-3 space-y-2.5">
-            {(children ?? []).map(child => {
-              const stats = childStatsMap?.[child._id];
+            {(dashboard?.children ?? []).map(child => {
               return (
                 <div key={child._id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span>{child.avatar}</span>
                     <span className="text-sm font-medium">{child.name}</span>
                   </div>
-                  <TokenBadge amount={stats?.tokenBalance ?? 0} size="sm" />
+                  <TokenBadge amount={child.tokenBalance} size="sm" />
                 </div>
               );
             })}
@@ -142,17 +135,18 @@ export default function CaregiverDashboard() {
               <p className="text-sm font-semibold">Recent Activity</p>
             </div>
             <div className="space-y-1">
-              {recentActivity.map((n) => (
-                <NotificationItem key={n._id} notification={{
+              {recentActivity.map((n) => {
+                const mockNotification = {
                   id: n._id,
-                  userId: n.userId ?? '',
+                  userId: n.userId ?? '' as string,
                   title: n.title,
                   body: n.body ?? '',
                   read: n.read ?? false,
-                  createdAt: new Date(n._creationTime).toISOString(),
-                  type: n.type as Notification['type'],
-                }} />
-              ))}
+                  createdAt: String(n._creationTime),
+                  type: n.type,
+                };
+                return <NotificationItem key={n._id} notification={mockNotification as import('@/mocks/data').Notification} />;
+              })}
             </div>
           </div>
         </Card>

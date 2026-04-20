@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useUser } from '@clerk/react';
 import { Bell, Home, ListChecks, Gift, Clock, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const bottomNavItems = [
   { title: 'Home', path: '/child/dashboard', icon: Home },
@@ -29,6 +30,7 @@ export function ChildLayout() {
           </span>
         )}
         <h1 className="font-display font-bold text-lg flex-1">{currentTitle}</h1>
+        <ThemeToggle />
         <Link to="/child/notifications" className="relative p-2 rounded-xl hover:bg-muted transition-colors">
           <Bell size={19} />
         </Link>

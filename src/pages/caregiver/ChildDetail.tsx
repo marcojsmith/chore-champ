@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { PageContainer } from '@/components/shared/PageContainer';
@@ -10,13 +10,34 @@ import { ProgressRing } from '@/components/shared/ProgressRing';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { ArrowLeft, CheckCircle2, Coins, Flame, Target } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Coins, Flame, Target, Copy, Link2 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function ChildDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const childData = useQuery(api.users.getChild, id ? { childId: id as Id<"users"> } : "skip");
   const tokenLedger = useQuery(api.tokenLedger.listForChildById, id ? { childId: id as Id<"users">, limit: 20 } : "skip");
+  const createInvite = useMutation(api.invites.createInvite);
+
+  const handleGenerateInvite = async () => {
+    if (!id) return;
+    try {
+      const token = await createInvite({ childId: id as Id<"users"> });
+      const url = `${window.location.origin}/join/${token}`;
+      setInviteUrl(url);
+    } catch {
+      toast.error('Failed to generate invite link');
+    }
+  };
+
+  const handleCopyInvite = () => {
+    if (!inviteUrl) return;
+    navigator.clipboard.writeText(inviteUrl);
+    toast.success('Invite link copied!');
+  };
 
   if (!id) return <PageContainer title="Not Found"><p>Child not found.</p></PageContainer>;
   
@@ -57,6 +78,28 @@ export default function ChildDetail() {
           totalSpent={stats?.totalSpent ?? 0}
           earnedThisWeek={stats?.earnedThisWeek ?? 0}
         />
+
+        <Card className="border">
+          <CardContent className="pt-4">
+            <p className="text-sm font-medium mb-2">Child Login</p>
+            {!inviteUrl ? (
+              <Button variant="outline" size="sm" onClick={handleGenerateInvite}>
+                <Link2 size={14} className="mr-1.5" /> Generate Invite Link
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Share this link with {child.name}:</p>
+                <div className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                  <span className="text-xs flex-1 break-all font-mono">{inviteUrl}</span>
+                  <Button variant="ghost" size="sm" onClick={handleCopyInvite} className="shrink-0">
+                    <Copy size={14} />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Link expires in 7 days · single use</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-3 gap-3">
           <MetricCard title="Completion" value={`${stats?.completionRate ?? 0}%`} icon={<Target size={16} />} variant="primary" />

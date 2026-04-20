@@ -3,6 +3,7 @@ import { useUser, useClerk } from '@clerk/react';
 import { Bell, Menu, X, LayoutDashboard, ListChecks, Gift, ClipboardCheck, BarChart3, Users, Settings, LogOut, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useQuery } from 'convex/react';
 import { api } from 'convex/_generated/api';
 import Setup from '@/pages/caregiver/Setup';
@@ -46,9 +47,9 @@ export function CaregiverLayout() {
 
       {/* Sidebar */}
       <aside className={cn(
-        'fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-card flex flex-col transition-transform duration-300 lg:translate-x-0',
+        'fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-card flex flex-col transition-transform duration-300 lg:translate-x-0 shadow-sm border-r',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      )} style={{ boxShadow: '2px 0 12px 0 rgb(0 0 0 / 0.06)', borderRight: '1px solid var(--color-border)' }}>
+      )}>
 
         {/* Logo area */}
         <div className="flex items-center justify-between h-16 px-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
@@ -118,6 +119,7 @@ export function CaregiverLayout() {
             <Menu size={20} />
           </button>
           <h1 className="font-display font-bold text-lg flex-1">{currentTitle}</h1>
+          <ThemeToggle />
           <Link to="/app/notifications" className="relative p-2 rounded-xl hover:bg-muted transition-colors">
             <Bell size={19} />
           </Link>

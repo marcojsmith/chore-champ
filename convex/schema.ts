@@ -30,6 +30,7 @@ export default defineSchema({
     totalEarned: v.number(),
     totalSpent: v.number(),
     earnedThisWeek: v.number(),
+    milestonesAwarded: v.optional(v.array(v.number())),
   }).index("by_childId", ["childId"]),
 
   chores: defineTable({
@@ -147,4 +148,27 @@ export default defineSchema({
     .index("by_childId", ["childId"])
     .index("by_childId_and_type", ["childId", "type"])
     .index("by_householdId", ["householdId"]),
+
+  requestedRewards: defineTable({
+    householdId: v.id("households"),
+    childId: v.id("users"),
+    title: v.string(),
+    description: v.string(),
+    category: v.optional(v.string()),
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected")),
+    assignedTokenValue: v.optional(v.number()),
+    resolvedAt: v.optional(v.number()),
+  })
+    .index("by_householdId_and_status", ["householdId", "status"])
+    .index("by_childId", ["childId"]),
+
+  invites: defineTable({
+    householdId: v.id("households"),
+    childId: v.id("users"),
+    token: v.string(),
+    expiresAt: v.number(),
+    usedAt: v.optional(v.number()),
+  })
+    .index("by_token", ["token"])
+    .index("by_childId", ["childId"]),
 });

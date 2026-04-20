@@ -36,7 +36,7 @@ export function RoleGuard({
     return <Spinner />;
   }
   if (me === null) {
-    return <Navigate to="/sign-in" replace />;
+    return <Navigate to="/setup" replace />;
   }
   if (me.role !== requiredRole) {
     return <Navigate to={redirectTo} replace />;
